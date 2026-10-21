@@ -321,6 +321,7 @@ class AuthService {
           email: key,
           password: pass,
           data: {'name': n, 'full_name': n},
+          emailRedirectTo: kIsWeb ? null : 'io.supabase.tiktap://login-callback',
         );
 
         if (res.user != null) {
