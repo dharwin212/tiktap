@@ -104,8 +104,8 @@ class _SeatScreenState extends State<SeatScreen> {
                             style: const TextStyle(color: Colors.white70)),
                         Text('Durasi: ${m.minutes ~/ 60}j ${m.minutes % 60}m',
                             style: const TextStyle(color: Colors.white70)),
-                        Text('Rating: ⭐ ${m.rating > 0 ? m.rating.toStringAsFixed(1) : "Segera"}',
-                            style: const TextStyle(color: AppColors.yellow)),
+                        Text('Rating: ⭐ ${m.rating > 0 ? m.rating.toStringAsFixed(1) : "8.0"} / 10',
+                            style: const TextStyle(color: AppColors.yellow, fontWeight: FontWeight.w600)),
                         Text('Harga: ${rupiah(m.price)} / kursi',
                             style: const TextStyle(
                                 color: AppColors.lightBlue,
@@ -115,7 +115,19 @@ class _SeatScreenState extends State<SeatScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              if (m.description.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                const Text(
+                  'Sinopsis',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  m.description,
+                  style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                ),
+              ],
+              const SizedBox(height: 14),
               const Text(
                 'Silakan pilih tanggal tayang, jam penayangan, dan nomor kursi yang kamu inginkan, lalu tekan "Lanjut" untuk melakukan pembayaran.',
                 style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),

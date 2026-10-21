@@ -11,6 +11,8 @@ class Movie {
   final List<Color> colors;
   /// Opsional: taruh file poster di assets/posters/ lalu isi, mis. 'assets/posters/spiderman.jpg'
   final String? posterAsset;
+  final String description;
+  final bool isComingSoon;
 
   const Movie({
     required this.title,
@@ -20,6 +22,8 @@ class Movie {
     required this.price,
     required this.colors,
     this.posterAsset,
+    this.description = '',
+    this.isComingSoon = false,
   });
 }
 
@@ -112,6 +116,8 @@ const nowPlaying = [
     price: 50000,
     colors: [Color(0xFF3A1010), Color(0xFF0B0B0B)],
     posterAsset: 'assets/posters/resident_evil.jpg',
+    description:
+        'Serangan virus mematikan mengubah populasi kota menjadi zombie haus darah, memaksa para penyintas berjuang mati-matian meloloskan diri.',
   ),
   Movie(
     title: 'Spider-Man: Brand New Day',
@@ -121,6 +127,8 @@ const nowPlaying = [
     price: 55000,
     colors: [Color(0xFFB3202A), Color(0xFF1C2A5E)],
     posterAsset: 'assets/posters/spiderman.jpg',
+    description:
+        'Peter Parker memulai babak baru hidupnya sebagai pahlawan tanpa topeng pengenal, menghadapi ancaman musuh baru di kota New York.',
   ),
   Movie(
     title: 'Aquaman',
@@ -130,6 +138,8 @@ const nowPlaying = [
     price: 50000,
     colors: [Color(0xFF1B6E8A), Color(0xFF0B2A3F)],
     posterAsset: 'assets/posters/aquaman.jpg',
+    description:
+        'Arthur Curry harus mengklaim hak warisnya sebagai Raja Atlantis untuk mencegah perang besar antara dunia laut dan daratan.',
   ),
   Movie(
     title: 'The Odyssey',
@@ -139,6 +149,8 @@ const nowPlaying = [
     price: 55000,
     colors: [Color(0xFF6A2E12), Color(0xFF14090A)],
     posterAsset: 'assets/posters/the_odyssey.jpg',
+    description:
+        'Kisah epik kepulangan Odysseus setelah Perang Troya yang penuh rintangan mistis, monster laut, dan ujian takdir para dewa Yunani.',
   ),
 ];
 
@@ -147,28 +159,37 @@ const comingSoon = [
     title: 'Avengers: Doomsday',
     genre: 'Action',
     minutes: 150,
-    rating: 0,
+    rating: 8.9,
     price: 60000,
     colors: [Color(0xFF1F5A4A), Color(0xFF0A1418)],
     posterAsset: 'assets/posters/avengers_doomsday.jpg',
+    description:
+        'Para pahlawan terkuat Bumi bersatu kembali menghadapi ancaman kosmik terbesar dari Doctor Doom yang berencana menguasai dan merestrukturisasi seluruh multiverse.',
+    isComingSoon: true,
   ),
   Movie(
     title: 'The Odyssey',
     genre: 'Epic',
     minutes: 150,
-    rating: 0,
+    rating: 8.6,
     price: 55000,
     colors: [Color(0xFF7A3A14), Color(0xFF14090A)],
     posterAsset: 'assets/posters/the_odyssey.jpg',
+    description:
+        'Petualangan legendaris sang pahlawan Ithaca menyeberangi lautan terkutuk demi kembali ke pelukan Penelope, menghadapi makhluk mitologi terkejam dalam sejarah Yunani Kuno.',
+    isComingSoon: true,
   ),
   Movie(
     title: 'Digger',
     genre: 'Drama',
     minutes: 120,
-    rating: 0,
+    rating: 8.2,
     price: 50000,
     colors: [Color(0xFF6C6A4C), Color(0xFF22221A)],
     posterAsset: 'assets/posters/digger.jpg',
+    description:
+        'Sebuah drama emosional berlatar wilayah pertambangan pedalaman, mengupas dinamika ikatan ayah dan anak serta konflik perebutan tanah yang sarat ketegangan moral.',
+    isComingSoon: true,
   ),
 ];
 
@@ -181,6 +202,8 @@ const topMovies = [
     price: 45000,
     colors: [Color(0xFFB4541C), Color(0xFF241008)],
     posterAsset: 'assets/posters/the_shawsank_reedemption.jpg',
+    description:
+        'Kisah persahabatan dan harapan abadi seorang bankir yang dijatuhi hukuman seumur hidup di penjara Shawshank atas kejahatan yang tidak dilakukannya.',
   ),
   Movie(
     title: 'The Godfather',
@@ -190,6 +213,8 @@ const topMovies = [
     price: 45000,
     colors: [Color(0xFF8A6A1E), Color(0xFF0A0A0A)],
     posterAsset: 'assets/posters/the_godfather.jpg',
+    description:
+        'Kisah legendaris keluarga mafia Corleone dan transformasi Michael dari putra yang enggan menjadi bos sindikat kejahatan yang kejam dan disegani.',
   ),
   Movie(
     title: 'Green Book',
@@ -199,6 +224,8 @@ const topMovies = [
     price: 45000,
     colors: [Color(0xFF1FA3B8), Color(0xFF0B3A4A)],
     posterAsset: 'assets/posters/green_book.jpg',
+    description:
+        'Pianis jazz klasik berkulit hitam dan sopir keturunan Italia-Amerika melakukan tur konser keliling wilayah Selatan Amerika Serikat yang sarat diskriminasi rasial.',
   ),
 ];
 
@@ -214,6 +241,13 @@ class PaymentMethod {
   }
 
   String get label => '$type  $masked';
+
+  PaymentMethod copyWith({String? id, String? type, String? number}) =>
+      PaymentMethod(
+        id: id ?? this.id,
+        type: type ?? this.type,
+        number: number ?? this.number,
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -406,6 +440,15 @@ class AppState extends ChangeNotifier {
     defaultPaymentId ??= m.id;
     onPaymentsChanged?.call(email, payments, defaultPaymentId);
     notifyListeners();
+  }
+
+  void updatePayment(String id, String newNumber) {
+    final idx = payments.indexWhere((m) => m.id == id);
+    if (idx != -1) {
+      payments[idx] = payments[idx].copyWith(number: newNumber);
+      onPaymentsChanged?.call(email, payments, defaultPaymentId);
+      notifyListeners();
+    }
   }
 
   void removePayment(String id) {
