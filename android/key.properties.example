@@ -1,0 +1,7 @@
+# Template konfigurasi signing key untuk rilis Android
+# Nilai ini juga dapat dilewatkan via GitHub Secrets / Environment Variables
+storePassword=tiktapsecret
+keyPassword=tiktapsecret
+keyAlias=tiktap
+storeFile=tiktap-release.jks
+

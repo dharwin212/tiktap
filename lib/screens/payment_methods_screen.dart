@@ -1,0 +1,231 @@
+import 'package:flutter/material.dart';
+import '../models.dart';
+import '../theme.dart';
+import '../widgets.dart';
+
+const _types = ['GOPAY', 'OVO', 'DANA', 'ShopeePay', 'Transfer Bank', 'Kartu Kredit'];
+
+IconData _iconFor(String t) {
+  if (t == 'Transfer Bank') return Icons.account_balance_outlined;
+  if (t == 'Kartu Kredit') return Icons.credit_card;
+  return Icons.account_balance_wallet_outlined;
+}
+
+String _labelFor(String t) {
+  if (t == 'Transfer Bank') return 'Nomor rekening';
+  if (t == 'Kartu Kredit') return 'Nomor kartu';
+  return 'Nomor HP $t';
+}
+
+class PaymentMethodsScreen extends StatelessWidget {
+  const PaymentMethodsScreen({super.key});
+
+  void _add(BuildContext context) {
+    var type = _types.first;
+    final c = TextEditingController();
+    String? err;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0D1824),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => Padding(
+          padding: EdgeInsets.fromLTRB(
+              20, 20, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
+          child: SingleChildScrollView(
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Center(
+                    child: Text('Tambah metode pembayaran',
+                        style:
+                            TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(spacing: 8, runSpacing: 8, children: [
+                    for (final t in _types)
+                      ChoiceChip(
+                        label: Text(t),
+                        selected: type == t,
+                        onSelected: (_) => setS(() => type = t),
+                        selectedColor: AppColors.lightBlue,
+                        labelStyle: TextStyle(
+                            color: type == t ? const Color(0xFF0B2A48) : Colors.white,
+                            fontSize: 12),
+                      ),
+                  ]),
+                  const SizedBox(height: 16),
+                  GlassField(
+                    label: _labelFor(type),
+                    hint: type == 'Kartu Kredit'
+                        ? '16 digit nomor kartu'
+                        : type == 'Transfer Bank'
+                            ? 'Nomor rekening'
+                            : '0812xxxxxxxx',
+                    icon: _iconFor(type),
+                    controller: c,
+                  ),
+                  if (err != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(err!,
+                          style: const TextStyle(
+                              color: Colors.redAccent, fontSize: 12)),
+                    ),
+                  const SizedBox(height: 18),
+                  GradientButton(
+                    text: 'Simpan',
+                    onTap: () {
+                      final digits = c.text.replaceAll(RegExp(r'\D'), '');
+                      final dup = AppState.I.payments
+                          .any((m) => m.type == type && m.number == digits);
+                      if (digits.length < 8 || digits.length > 19) {
+                        setS(() => err = 'Nomor harus 8-19 digit angka.');
+                      } else if (dup) {
+                        setS(() => err = 'Metode ini sudah tersimpan.');
+                      } else {
+                        AppState.I.addPayment(PaymentMethod(
+                            id: AppState.I.newId('pm'),
+                            type: type,
+                            number: digits));
+                        Navigator.of(ctx).pop();
+                      }
+                    },
+                  ),
+                ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, PaymentMethod m) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0D1824),
+        title: const Text('Hapus metode?'),
+        content: Text('${m.label} akan dihapus dari akunmu.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Batal')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Hapus',
+                  style: TextStyle(color: Colors.redAccent))),
+        ],
+      ),
+    );
+    if (ok == true) AppState.I.removePayment(m.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SubPage(
+      title: 'Metode Pembayaran',
+      body: ListenableBuilder(
+        listenable: AppState.I,
+        builder: (context, _) {
+          final list = AppState.I.payments;
+          return Column(children: [
+            Expanded(
+              child: list.isEmpty
+                  ? const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Column(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.credit_card_off_outlined,
+                              size: 52, color: Colors.white54),
+                          SizedBox(height: 12),
+                          Text('Belum ada metode pembayaran',
+                              style: TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.w600)),
+                          SizedBox(height: 4),
+                          Text('Tambahkan agar checkout lebih cepat.',
+                              style: TextStyle(color: Colors.white70)),
+                        ]),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+                      itemCount: list.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (_, i) {
+                        final m = list[i];
+                        final isDef = m.id == AppState.I.defaultPayment?.id;
+                        return GlassBox(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
+                          radius: 16,
+                          child: Row(children: [
+                            Icon(_iconFor(m.type), color: AppColors.lightBlue),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(children: [
+                                      Text(m.type,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15)),
+                                      if (isDef) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.lightBlue.withValues(alpha: 0.2),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: const Text('Utama',
+                                              style: TextStyle(
+                                                  color: AppColors.lightBlue,
+                                                  fontSize: 10)),
+                                        ),
+                                      ],
+                                    ]),
+                                    Text(m.masked,
+                                        style: const TextStyle(
+                                            color: Colors.white70, fontSize: 13)),
+                                  ]),
+                            ),
+                            PopupMenuButton<String>(
+                              color: const Color(0xFF0D1824),
+                              icon: const Icon(Icons.more_vert, color: Colors.white70),
+                              onSelected: (v) {
+                                if (v == 'default') {
+                                  AppState.I.setDefaultPayment(m.id);
+                                } else {
+                                  _confirmDelete(context, m);
+                                }
+                              },
+                              itemBuilder: (_) => [
+                                if (!isDef)
+                                  const PopupMenuItem(
+                                      value: 'default', child: Text('Jadikan utama')),
+                                const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text('Hapus',
+                                        style: TextStyle(color: Colors.redAccent))),
+                              ],
+                            ),
+                          ]),
+                        );
+                      },
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: GradientButton(
+                  text: 'Tambah metode pembayaran', onTap: () => _add(context)),
+            ),
+          ]);
+        },
+      ),
+    );
+  }
+}

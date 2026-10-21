@@ -1,0 +1,98 @@
+name: Build & Release Consistent Signed APK
+
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Buat GitHub Release otomatis?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build Signed APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Prepare Signing Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+        run: |
+          mkdir -p android/app
+          # Jika KEYSTORE_BASE64 tersedia di GitHub Secrets, decode ke file keystore
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/tiktap-release.jks
+            echo "Keystore successfully decoded from GitHub Secrets."
+          elif [ -f "android/app/tiktap-release.jks" ]; then
+            echo "Using existing repository keystore."
+          else
+            echo "Error: Keystore not found!"
+            exit 1
+          fi
+
+          # Tulis android/key.properties agar build Gradle selalu konsisten
+          cat <<EOF > android/key.properties
+          keyAlias=${KEY_ALIAS:-tiktap}
+          keyPassword=${KEY_PASSWORD:-tiktapsecret}
+          storePassword=${STORE_PASSWORD:-tiktapsecret}
+          storeFile=tiktap-release.jks
+          EOF
+
+      - name: Build Release APK
+        run: flutter build apk --release
+
+      - name: Verify APK Signature (Check Consistency)
+        run: |
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          echo "Memverifikasi signature APK: $APK_PATH"
+          if command -v apksigner &> /dev/null; then
+            apksigner verify --verbose "$APK_PATH"
+          fi
+          cp "$APK_PATH" "build/app/outputs/flutter-apk/tiktap.apk"
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiktap-release-apk
+          path: build/app/outputs/flutter-apk/tiktap.apk
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.create_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/tiktap.apk
+          name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+

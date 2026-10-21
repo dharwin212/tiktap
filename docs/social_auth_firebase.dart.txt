@@ -1,0 +1,88 @@
+// SALIN file ini menjadi lib/social_auth_firebase.dart SETELAH Firebase siap
+// (lihat PANDUAN_LOGIN_SOSIAL.md). Sengaja berekstensi .txt supaya tidak ikut
+// dikompilasi sebelum paketnya dipasang.
+//
+// Catatan versi paket: kode ditulis untuk google_sign_in 7.x dan
+// flutter_facebook_auth 6.x+ (accessToken.tokenString). Jika versi Anda berbeda,
+// sesuaikan nama method-nya mengikuti dokumentasi paket tersebut.
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'social_auth.dart';
+
+/// ISI: "Web client ID" dari Firebase Console > Authentication > Sign-in method > Google
+/// (dipakai di Android/iOS oleh google_sign_in v7).
+const _googleServerClientId = 'ISI_WEB_CLIENT_ID.apps.googleusercontent.com';
+
+class _Canceled implements Exception {}
+
+class FirebaseSocialAuth implements SocialAuth {
+  static bool _googleReady = false;
+
+  @override
+  bool get isReal => true;
+
+  @override
+  Future<SocialProfile?> signIn(BuildContext context, String provider) async {
+    try {
+      final cred = provider == 'google' ? await _google() : await _facebook();
+      final user = cred.user;
+      final email = user?.email ??
+          (cred.additionalUserInfo?.profile?['email'] as String?);
+      if (email == null || email.isEmpty) {
+        throw 'Akun tidak membagikan email. Izinkan akses email lalu coba lagi.';
+      }
+      final name = (user?.displayName ?? '').trim();
+      // Sesi aplikasi dikelola AuthService, jadi sesi Firebase tidak perlu dipertahankan.
+      await FirebaseAuth.instance.signOut();
+      return SocialProfile(
+          email: email, name: name.isEmpty ? email.split('@').first : name);
+    } on _Canceled {
+      return null;
+    } on FirebaseAuthException catch (e) {
+      const cancelled = {
+        'popup-closed-by-user',
+        'cancelled-popup-request',
+        'web-context-canceled',
+      };
+      if (cancelled.contains(e.code)) return null;
+      throw e.message ?? e.code;
+    } catch (e) {
+      // google_sign_in v7 melempar GoogleSignInException saat dibatalkan.
+      if (e.toString().toLowerCase().contains('cancel')) return null;
+      rethrow;
+    }
+  }
+
+  Future<UserCredential> _google() async {
+    if (kIsWeb) {
+      return FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
+    }
+    if (!_googleReady) {
+      await GoogleSignIn.instance.initialize(serverClientId: _googleServerClientId);
+      _googleReady = true;
+    }
+    final account = await GoogleSignIn.instance.authenticate();
+    final idToken = account.authentication.idToken;
+    return FirebaseAuth.instance
+        .signInWithCredential(GoogleAuthProvider.credential(idToken: idToken));
+  }
+
+  Future<UserCredential> _facebook() async {
+    if (kIsWeb) {
+      return FirebaseAuth.instance
+          .signInWithPopup(FacebookAuthProvider()..addScope('email'));
+    }
+    final r =
+        await FacebookAuth.instance.login(permissions: ['email', 'public_profile']);
+    if (r.status == LoginStatus.cancelled) throw _Canceled();
+    if (r.status != LoginStatus.success || r.accessToken == null) {
+      throw r.message ?? 'Login Facebook gagal';
+    }
+    return FirebaseAuth.instance.signInWithCredential(
+        FacebookAuthProvider.credential(r.accessToken!.tokenString));
+  }
+}

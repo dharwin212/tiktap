@@ -1,0 +1,102 @@
+// SALIN file ini menjadi lib/social_auth_supabase.dart SETELAH Supabase siap
+// (lihat PANDUAN_LOGIN_SOSIAL.md). Berekstensi .txt supaya tidak ikut dikompilasi
+// sebelum paket supabase_flutter dipasang.
+//
+// Ditulis untuk supabase_flutter 2.x. Jika versi Anda berbeda, sesuaikan nama
+// method mengikuti dokumentasi paketnya.
+
+import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'social_auth.dart';
+
+/// Deep link untuk Android/iOS. Harus SAMA dengan yang didaftarkan di
+/// AndroidManifest.xml, Info.plist, dan Supabase > Authentication > URL Configuration > Redirect URLs.
+const supabaseRedirectNative = 'io.supabase.tiktap://login-callback/';
+
+class SupabaseSocialAuth implements SocialAuth {
+  SupabaseClient get _c => Supabase.instance.client;
+
+  @override
+  bool get isReal => true;
+
+  SocialProfile _toProfile(User u, String? provider) {
+    final meta = u.userMetadata ?? <String, dynamic>{};
+    final email = (u.email ?? (meta['email'] as String?) ?? '').trim();
+    if (email.isEmpty) {
+      throw 'Akun tidak membagikan email. Izinkan akses email lalu coba lagi.';
+    }
+    final name = ((meta['full_name'] ?? meta['name'] ?? '') as String).trim();
+    final prov = provider ?? (u.appMetadata['provider'] as String?) ?? 'google';
+    return SocialProfile(
+      provider: prov,
+      email: email,
+      name: name.isEmpty ? email.split('@').first : name,
+    );
+  }
+
+  @override
+  Future<SocialProfile?> signIn(BuildContext context, String provider) async {
+    final p = provider == 'google' ? OAuthProvider.google : OAuthProvider.facebook;
+
+    // Sesi aplikasi dikelola AuthService, jadi sesi Supabase lama dibersihkan dulu.
+    if (_c.auth.currentSession != null) await _c.auth.signOut();
+
+    final done = Completer<SocialProfile?>();
+    StreamSubscription<AuthState>? sub;
+    if (!kIsWeb) {
+      sub = _c.auth.onAuthStateChange.listen((data) {
+        if (data.event == AuthChangeEvent.signedIn &&
+            data.session != null &&
+            !done.isCompleted) {
+          try {
+            done.complete(_toProfile(data.session!.user, provider));
+          } catch (e) {
+            done.completeError(e);
+          }
+        }
+      });
+    }
+
+    try {
+      final launched = await _c.auth.signInWithOAuth(
+        p,
+        redirectTo: kIsWeb ? null : supabaseRedirectNative,
+      );
+      if (!launched) throw 'Tidak bisa membuka halaman login.';
+
+      // Web: halaman dialihkan ke Google/Facebook lalu kembali ke aplikasi.
+      // Hasilnya diproses oleh restore() saat layar login terbuka lagi.
+      if (kIsWeb) return null;
+
+      final prof = await done.future
+          .timeout(const Duration(minutes: 3), onTimeout: () => null);
+      if (prof != null) await _c.auth.signOut();
+      return prof;
+    } finally {
+      await sub?.cancel();
+    }
+  }
+
+  @override
+  Future<SocialProfile?> restore() async {
+    var s = _c.auth.currentSession;
+    // Web: setelah redirect, sesi diproses sesaat setelah aplikasi mulai.
+    final cameBack = kIsWeb &&
+        (Uri.base.queryParameters.containsKey('code') ||
+            Uri.base.fragment.contains('access_token'));
+    if (s == null && cameBack) {
+      try {
+        final ev = await _c.auth.onAuthStateChange
+            .firstWhere((e) => e.session != null)
+            .timeout(const Duration(seconds: 5));
+        s = ev.session;
+      } catch (_) {}
+    }
+    if (s == null) return null;
+    final prof = _toProfile(s.user, null);
+    await _c.auth.signOut();
+    return prof;
+  }
+}
