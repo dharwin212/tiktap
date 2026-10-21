@@ -92,3 +92,37 @@ create policy "Pengguna dapat mengupdate tiket miliknya"
   on public.tickets for update
   using (auth.uid() = user_id);
 
+
+-- 3. TABEL METODE PEMBAYARAN (PAYMENT METHODS)
+create table if not exists public.payment_methods (
+  id text primary key,
+  user_id uuid references auth.users on delete cascade not null,
+  type text not null,
+  number text not null,
+  is_default boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.payment_methods enable row level security;
+
+-- Policy: Pengguna hanya dapat membaca metode pembayaran miliknya
+create policy "Pengguna hanya melihat metode pembayaran miliknya"
+  on public.payment_methods for select
+  using (auth.uid() = user_id);
+
+-- Policy: Pengguna dapat menyimpan metode pembayaran miliknya
+create policy "Pengguna dapat menyimpan metode pembayaran"
+  on public.payment_methods for insert
+  with check (auth.uid() = user_id);
+
+-- Policy: Pengguna dapat mengupdate metode pembayaran miliknya
+create policy "Pengguna dapat mengupdate metode pembayaran miliknya"
+  on public.payment_methods for update
+  using (auth.uid() = user_id);
+
+-- Policy: Pengguna dapat menghapus metode pembayaran miliknya
+create policy "Pengguna dapat menghapus metode pembayaran miliknya"
+  on public.payment_methods for delete
+  using (auth.uid() = user_id);
+
+

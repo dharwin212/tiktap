@@ -30,8 +30,12 @@ class _OrderScreenState extends State<OrderScreen> {
   int _v = 0;
 
   PaymentMethod? get _sel {
-    final list = AppState.I.payments;
-    if (list.isEmpty) return null;
+    var list = AppState.I.payments;
+    if (list.isEmpty) {
+      AppState.I.payments = List.of(defaultPaymentMethods());
+      AppState.I.defaultPaymentId = AppState.I.payments.first.id;
+      list = AppState.I.payments;
+    }
     return list.firstWhere((m) => m.id == _payId,
         orElse: () => AppState.I.defaultPayment ?? list.first);
   }

@@ -134,19 +134,37 @@ class PaymentMethodsScreen extends StatelessWidget {
           return Column(children: [
             Expanded(
               child: list.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Padding(
-                        padding: EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(32),
                         child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          Icon(Icons.credit_card_off_outlined,
+                          const Icon(Icons.credit_card_off_outlined,
                               size: 52, color: Colors.white54),
-                          SizedBox(height: 12),
-                          Text('Belum ada metode pembayaran',
+                          const SizedBox(height: 12),
+                          const Text('Belum ada metode pembayaran',
                               style: TextStyle(
                                   fontSize: 17, fontWeight: FontWeight.w600)),
-                          SizedBox(height: 4),
-                          Text('Tambahkan agar checkout lebih cepat.',
+                          const SizedBox(height: 4),
+                          const Text('Tambahkan agar checkout lebih cepat.',
                               style: TextStyle(color: Colors.white70)),
+                          const SizedBox(height: 16),
+                          TextButton.icon(
+                            icon: const Icon(Icons.refresh, color: AppColors.lightBlue),
+                            label: const Text(
+                              'Muat metode default (GOPAY, DANA, OVO, BCA)',
+                              style: TextStyle(color: AppColors.lightBlue),
+                            ),
+                            onPressed: () {
+                              AppState.I.payments =
+                                  List.of(defaultPaymentMethods());
+                              AppState.I.defaultPaymentId =
+                                  AppState.I.payments.first.id;
+                              AppState.I.onPaymentsChanged?.call(
+                                  AppState.I.email,
+                                  AppState.I.payments,
+                                  AppState.I.defaultPaymentId);
+                            },
+                          ),
                         ]),
                       ),
                     )

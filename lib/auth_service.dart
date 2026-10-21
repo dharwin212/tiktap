@@ -13,13 +13,34 @@ const kAccountNotFound = 'NOT_FOUND';
 /// Layanan Autentikasi TikTap:
 /// - Menggunakan Database Cloud Supabase (PostgreSQL) bila kredensial tersedia.
 /// - Fallback mulus ke penyimpanan lokal SharedPreferences bila offline / belum dikonfigurasi.
+/// - Menjaga tiket dan metode pembayaran tetap persisten (tidak pernah hilang saat migrasi/restart).
 class AuthService {
   static late SharedPreferences _p;
 
   static Future<void> init() async {
     _p = await SharedPreferences.getInstance();
     await SupabaseConfig.initialize();
+
     AppState.I.onTicketsChanged = (email, list) => saveTickets(email, list);
+    AppState.I.onPaymentsChanged =
+        (email, list, defId) => savePayments(email, list, defId);
+
+    // Pulihkan metode pembayaran & tiket untuk email saat ini / terakhir
+    final lastEmail = _p.getString('last_active_email') ?? AppState.I.email;
+    final savedPayments = _loadPayments(lastEmail);
+    final savedDefPayment =
+        _p.getString('def_payment_${lastEmail.toLowerCase()}');
+    final savedTickets = _loadTicketsLocal(lastEmail);
+
+    AppState.I.payments = savedPayments.isNotEmpty
+        ? savedPayments
+        : List.of(defaultPaymentMethods());
+    AppState.I.defaultPaymentId =
+        savedDefPayment ?? AppState.I.payments.first.id;
+
+    if (savedTickets.isNotEmpty) {
+      AppState.I.tickets = savedTickets;
+    }
 
     // Cek jika pengguna sudah memiliki sesi login aktif di Supabase
     if (SupabaseConfig.isConfigured) {
@@ -43,15 +64,92 @@ class AuthService {
           user.email!.split('@').first;
       final phone = profile?['phone'] as String? ?? '';
       final tickets = await _loadTicketsFromDb(user.id);
+      final dbPayments = await _loadPaymentsFromDb(user.id);
+      final localPayments = _loadPayments(user.email!);
+      final payments = dbPayments.isNotEmpty ? dbPayments : localPayments;
+      final defId = _p.getString('def_payment_${user.email!.toLowerCase()}');
 
       AppState.I.login(
         name,
         mail: user.email!,
         tel: phone,
         saved: tickets.isNotEmpty ? tickets : _loadTicketsLocal(user.email!),
+        savedPayments: payments,
+        savedDefaultPaymentId: defId,
       );
     } catch (e) {
       debugPrint('[AuthService] Gagal memulihkan sesi Supabase: $e');
+    }
+  }
+
+  // ---- Metode Pembayaran Database / Lokal ----
+  static Future<List<PaymentMethod>> _loadPaymentsFromDb(String userId) async {
+    try {
+      final data = await Supabase.instance.client
+          .from('payment_methods')
+          .select()
+          .eq('user_id', userId);
+
+      if ((data as List).isEmpty) return [];
+      return (data as List).map((row) {
+        return PaymentMethod(
+          id: row['id'] as String,
+          type: row['type'] as String,
+          number: row['number'] as String,
+        );
+      }).toList();
+    } catch (e) {
+      debugPrint('[AuthService] Gagal memuat payment methods dari db: $e');
+      return [];
+    }
+  }
+
+  static List<PaymentMethod> _loadPayments(String email) {
+    var raw = _p.getString('payments_${email.toLowerCase()}');
+    if (raw == null && email.toLowerCase() != 'guest@tiktap.id') {
+      raw = _p.getString('payments_guest@tiktap.id');
+    }
+    if (raw != null) {
+      try {
+        final list = (jsonDecode(raw) as List)
+            .map((e) => PaymentMethod.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        if (list.isNotEmpty) return list;
+      } catch (_) {}
+    }
+    return List.of(defaultPaymentMethods());
+  }
+
+  static Future<void> savePayments(
+      String email, List<PaymentMethod> list, String? defaultId) async {
+    if (email.isEmpty) return;
+    // 1. Simpan ke local cache perangkat
+    await _p.setString('payments_${email.toLowerCase()}',
+        jsonEncode(list.map((m) => m.toJson()).toList()));
+    if (defaultId != null) {
+      await _p.setString('def_payment_${email.toLowerCase()}', defaultId);
+    }
+    await _p.setString('last_active_email', email.toLowerCase());
+
+    // 2. Simpan ke Database Supabase bila terhubung
+    if (SupabaseConfig.isConfigured) {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        try {
+          for (final m in list) {
+            await Supabase.instance.client.from('payment_methods').upsert({
+              'id': m.id,
+              'user_id': user.id,
+              'type': m.type,
+              'number': m.number,
+              'is_default': m.id == defaultId,
+            });
+          }
+        } catch (e) {
+          debugPrint(
+              '[AuthService] Gagal menyimpan payment methods ke database: $e');
+        }
+      }
     }
   }
 
@@ -88,7 +186,11 @@ class AuthService {
   }
 
   static List<Ticket> _loadTicketsLocal(String email) {
-    final raw = _p.getString('tickets_${email.toLowerCase()}');
+    var raw = _p.getString('tickets_${email.toLowerCase()}');
+    // Jika akun baru/migrasi belum punya tiket lokal, periksa apakah ada tiket sesi guest
+    if (raw == null && email.toLowerCase() != 'guest@tiktap.id') {
+      raw = _p.getString('tickets_guest@tiktap.id');
+    }
     if (raw == null) return [];
     try {
       return (jsonDecode(raw) as List)
@@ -165,10 +267,19 @@ class AuthService {
           (e.value['name'] as String).toLowerCase() == name.toLowerCase());
 
   static void _startSession(Map<String, dynamic> a) {
-    AppState.I.login(a['name'],
-        mail: a['email'],
-        tel: a['phone'] ?? '',
-        saved: _loadTicketsLocal(a['email']));
+    final mail = a['email'] as String;
+    final payments = _loadPayments(mail);
+    final defId = _p.getString('def_payment_${mail.toLowerCase()}');
+    _p.setString('last_active_email', mail.toLowerCase());
+
+    AppState.I.login(
+      a['name'],
+      mail: mail,
+      tel: a['phone'] ?? '',
+      saved: _loadTicketsLocal(mail),
+      savedPayments: payments,
+      savedDefaultPaymentId: defId,
+    );
   }
 
   static String _providerName(String p) => p == 'google'
@@ -210,7 +321,16 @@ class AuthService {
           });
         } catch (_) {}
 
-        AppState.I.login(n, mail: key);
+        final payments = _loadPayments(key);
+        final defId = _p.getString('def_payment_$key');
+        _p.setString('last_active_email', key);
+
+        AppState.I.login(
+          n,
+          mail: key,
+          savedPayments: payments,
+          savedDefaultPaymentId: defId,
+        );
         return null;
       } on AuthException catch (e) {
         if (e.message.toLowerCase().contains('already registered') ||
@@ -283,12 +403,19 @@ class AuthService {
             email.split('@').first;
         final phone = profile?['phone'] as String? ?? '';
         final tickets = await _loadTicketsFromDb(res.user!.id);
+        final dbPayments = await _loadPaymentsFromDb(res.user!.id);
+        final localPayments = _loadPayments(email);
+        final payments = dbPayments.isNotEmpty ? dbPayments : localPayments;
+        final defId = _p.getString('def_payment_${email.toLowerCase()}');
+        _p.setString('last_active_email', email.toLowerCase());
 
         AppState.I.login(
           name,
           mail: email,
           tel: phone,
           saved: tickets.isNotEmpty ? tickets : _loadTicketsLocal(email),
+          savedPayments: payments,
+          savedDefaultPaymentId: defId,
         );
         return null;
       } on AuthException catch (e) {
@@ -341,7 +468,19 @@ class AuthService {
             'photo_url': photoUrl,
           });
           final tickets = await _loadTicketsFromDb(user.id);
-          AppState.I.login(n, mail: key, saved: tickets);
+          final dbPayments = await _loadPaymentsFromDb(user.id);
+          final localPayments = _loadPayments(key);
+          final payments = dbPayments.isNotEmpty ? dbPayments : localPayments;
+          final defId = _p.getString('def_payment_$key');
+          _p.setString('last_active_email', key);
+
+          AppState.I.login(
+            n,
+            mail: key,
+            saved: tickets.isNotEmpty ? tickets : _loadTicketsLocal(key),
+            savedPayments: payments,
+            savedDefaultPaymentId: defId,
+          );
           return (error: null, isNew: false);
         } catch (_) {}
       }

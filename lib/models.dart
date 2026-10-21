@@ -213,7 +213,26 @@ class PaymentMethod {
   }
 
   String get label => '$type  $masked';
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'type': type,
+        'number': number,
+      };
+
+  factory PaymentMethod.fromJson(Map<String, dynamic> j) => PaymentMethod(
+        id: j['id'] as String,
+        type: j['type'] as String,
+        number: j['number'] as String,
+      );
 }
+
+List<PaymentMethod> defaultPaymentMethods() => const [
+      PaymentMethod(id: 'pm_gopay', type: 'GOPAY', number: '081234567890'),
+      PaymentMethod(id: 'pm_dana', type: 'DANA', number: '081234567890'),
+      PaymentMethod(id: 'pm_ovo', type: 'OVO', number: '081234567890'),
+      PaymentMethod(id: 'pm_bca', type: 'Transfer Bank (BCA)', number: '1234567890'),
+    ];
 
 class AppNotification {
   final String id;
@@ -242,6 +261,8 @@ class ChatMsg {
 /// State global sederhana (tanpa package tambahan). Semua data disimpan di memori.
 class AppState extends ChangeNotifier {
   AppState._() {
+    payments = List.of(defaultPaymentMethods());
+    defaultPaymentId = payments.first.id;
     // Segarkan tampilan berkala agar status tiket berubah saat jam tayang lewat.
     Timer.periodic(const Duration(seconds: 30), (_) {
       if (tickets.isNotEmpty) notifyListeners();
@@ -257,7 +278,7 @@ class AppState extends ChangeNotifier {
   int tab = 0;
   Order? order; // pesanan yang menunggu konfirmasi
   List<Ticket> tickets = []; // awalnya kosong, terisi setelah pembelian
-  List<PaymentMethod> payments = [];
+  List<PaymentMethod> payments = List.of(defaultPaymentMethods());
   String? defaultPaymentId;
   List<AppNotification> notifications = [];
   bool notifPurchase = true;
@@ -267,6 +288,10 @@ class AppState extends ChangeNotifier {
 
   /// Dipasang AuthService: dipanggil tiap daftar tiket berubah (untuk disimpan per akun).
   void Function(String email, List<Ticket> tickets)? onTicketsChanged;
+
+  /// Dipasang AuthService: dipanggil tiap metode pembayaran berubah (untuk disimpan per akun).
+  void Function(String email, List<PaymentMethod> payments, String? defaultId)?
+      onPaymentsChanged;
 
   String newId(String prefix) =>
       '$prefix${DateTime.now().microsecondsSinceEpoch}${_seq++}';
@@ -278,8 +303,8 @@ class AppState extends ChangeNotifier {
     tab = 0;
     order = null;
     tickets = [];
-    payments = [];
-    defaultPaymentId = null;
+    payments = List.of(defaultPaymentMethods());
+    defaultPaymentId = payments.first.id;
     notifications = [];
     notifPurchase = true;
     notifPromo = true;
@@ -311,15 +336,30 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void login(String name, {String? mail, String? tel, List<Ticket>? saved}) {
+  void login(
+    String name, {
+    String? mail,
+    String? tel,
+    List<Ticket>? saved,
+    List<PaymentMethod>? savedPayments,
+    String? savedDefaultPaymentId,
+  }) {
     _reset();
     phone = tel ?? '';
     tickets = saved ?? [];
     username = name.isEmpty ? 'Guest' : name;
-    email = (mail == null || mail.isEmpty) ? '${username.toLowerCase()}@tiktap.id' : mail;
-    final pm = PaymentMethod(id: newId('pm'), type: 'GOPAY', number: '081200000000');
-    payments = [pm];
-    defaultPaymentId = pm.id;
+    email = (mail == null || mail.isEmpty)
+        ? '${username.toLowerCase()}@tiktap.id'
+        : mail;
+
+    if (savedPayments != null && savedPayments.isNotEmpty) {
+      payments = savedPayments;
+      defaultPaymentId = savedDefaultPaymentId ?? savedPayments.first.id;
+    } else {
+      payments = List.of(defaultPaymentMethods());
+      defaultPaymentId = payments.first.id;
+    }
+
     _push('Selamat datang di TikTap',
         'Halo $username! Pilih film favoritmu dan pesan tiketnya sekarang.', 'info');
     _push('Promo untuk kamu',
@@ -331,6 +371,8 @@ class AppState extends ChangeNotifier {
     _reset();
     username = 'Guest';
     email = 'guest@tiktap.id';
+    payments = List.of(defaultPaymentMethods());
+    defaultPaymentId = payments.first.id;
     notifyListeners();
   }
 
@@ -361,6 +403,7 @@ class AppState extends ChangeNotifier {
   void addPayment(PaymentMethod m) {
     payments.add(m);
     defaultPaymentId ??= m.id;
+    onPaymentsChanged?.call(email, payments, defaultPaymentId);
     notifyListeners();
   }
 
@@ -369,11 +412,13 @@ class AppState extends ChangeNotifier {
     if (defaultPaymentId == id) {
       defaultPaymentId = payments.isEmpty ? null : payments.first.id;
     }
+    onPaymentsChanged?.call(email, payments, defaultPaymentId);
     notifyListeners();
   }
 
   void setDefaultPayment(String id) {
     defaultPaymentId = id;
+    onPaymentsChanged?.call(email, payments, defaultPaymentId);
     notifyListeners();
   }
 
