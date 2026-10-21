@@ -240,9 +240,9 @@ class _TicketCard extends StatelessWidget {
   final double glow;
   const _TicketCard({required this.t, this.glow = 0});
 
-  static const _w = 250.0;
-  static const _posterH = 290.0;
-  static const _h = 440.0;
+  static const _w = 260.0;
+  static const _posterH = 265.0;
+  static const _h = 445.0;
 
   Widget _info(String label, String value, {int flex = 1}) => Expanded(
         flex: flex,
@@ -250,14 +250,14 @@ class _TicketCard extends StatelessWidget {
           Text(label,
               style: const TextStyle(
                   color: Color(0xFF5B2A86),
-                  fontSize: 12,
+                  fontSize: 11,
                   fontWeight: FontWeight.w500)),
           Text(value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                   color: Color(0xFF14202B),
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600)),
         ]),
       );
@@ -291,13 +291,13 @@ class _TicketCard extends StatelessWidget {
               Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 22),
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                   child: Text(m.title.toUpperCase(),
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       style: const TextStyle(
-                          fontSize: 22,
-                          letterSpacing: 4,
+                          fontSize: 20,
+                          letterSpacing: 3,
                           fontWeight: FontWeight.w600)),
                 ),
               ),
@@ -307,23 +307,25 @@ class _TicketCard extends StatelessWidget {
           Container(
             height: _h - _posterH,
             width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
             color: const Color(0xFFE9EEF4),
             child: Column(children: [
               const SizedBox(
-                  height: 14,
+                  height: 12,
                   child: Center(child: DashedLine(color: Colors.black45))),
               Row(children: [
                 _info('Date', t.date, flex: 3),
                 _info('Time', t.time, flex: 2),
               ]),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Row(children: [
-                _info('Row', seatRows(t.seats)),
-                _info('Seats', seatNumbers(t.seats)),
+                _info('Row', seatRows(t.seats), flex: 1),
+                _info('Seats', seatNumbers(t.seats), flex: 2),
+                _info('Payment', t.payment.isNotEmpty ? t.payment : 'GOPAY', flex: 2),
               ]),
-              const SizedBox(height: 10),
-              Expanded(
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 34,
                 child: BarcodeWidget(
                   barcode: Barcode.code128(),
                   data: t.id,
@@ -332,7 +334,7 @@ class _TicketCard extends StatelessWidget {
                   errorBuilder: (_, __) => const SizedBox(),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 3),
               Text(t.id,
                   style: const TextStyle(
                       color: Colors.black54, fontSize: 10, letterSpacing: 2)),

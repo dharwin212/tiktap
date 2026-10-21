@@ -169,3 +169,4 @@ insert into public.payment_methods (id, user_id, type, number, is_default)
 select 'pm_bca_' || id, id, 'Transfer Bank (BCA)', '1234567890', false
 from auth.users
 on conflict (id) do nothing;
+
