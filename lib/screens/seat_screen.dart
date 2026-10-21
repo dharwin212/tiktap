@@ -321,15 +321,20 @@ class _SeatScreenState extends State<SeatScreen> {
                 child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(_seats.isEmpty ? 'Pilih kursi' : sorted.join(', '),
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 13)),
-                        const SizedBox(height: 2),
-                        Text(rupiah(total),
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w700)),
-                      ]),
+                      Expanded(
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(_seats.isEmpty ? 'Pilih kursi' : sorted.join(', '),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  color: Colors.white70, fontSize: 13)),
+                          const SizedBox(height: 2),
+                          Text(rupiah(total),
+                              style: const TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.w700)),
+                        ]),
+                      ),
+                      const SizedBox(width: 12),
                       SizedBox(
                         width: 130,
                         child: Opacity(

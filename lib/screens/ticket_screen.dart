@@ -62,16 +62,20 @@ class TicketScreen extends StatelessWidget {
 
         return Column(children: [
           _header(),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
             child: Text(
               'Once you buy a movie ticket simply scan the barcode to access your movie.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, height: 1.35),
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.3,
+                color: Colors.white.withValues(alpha: 0.85),
+              ),
             ),
           ),
           Expanded(child: _TicketCarousel(tickets: list)),
-          SizedBox(height: 80 + MediaQuery.paddingOf(context).bottom),
+          SizedBox(height: 72 + MediaQuery.paddingOf(context).bottom),
         ]);
       },
     );
@@ -143,9 +147,9 @@ class _TicketCarouselState extends State<_TicketCarousel>
     return LayoutBuilder(builder: (context, c) {
       final s = math.min(
           1.0,
-          math.min((c.maxHeight - 56) / _TicketCard._h,
-              (c.maxWidth * 0.66) / _TicketCard._w));
-      _step = _TicketCard._w * s * 0.30;
+          math.min((c.maxHeight - 20) / _TicketCard._h,
+              (c.maxWidth * 0.70) / _TicketCard._w));
+      _step = _TicketCard._w * s * 0.32;
       return GestureDetector(
         behavior: HitTestBehavior.translucent,
         onHorizontalDragUpdate: (d) {
@@ -246,8 +250,8 @@ class _TicketCard extends StatelessWidget {
   const _TicketCard({required this.t, this.glow = 0});
 
   static const _w = 260.0;
-  static const _posterH = 265.0;
-  static const _h = 445.0;
+  static const _posterH = 238.0;
+  static const _h = 460.0;
 
   Widget _info(String label, String value, {int flex = 1}) => Expanded(
         flex: flex,
@@ -255,14 +259,17 @@ class _TicketCard extends StatelessWidget {
           Text(label,
               style: const TextStyle(
                   color: Color(0xFF5B2A86),
-                  fontSize: 11,
+                  fontSize: 10.5,
+                  height: 1.15,
                   fontWeight: FontWeight.w500)),
+          const SizedBox(height: 1),
           Text(value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                   color: Color(0xFF14202B),
-                  fontSize: 12,
+                  fontSize: 11.5,
+                  height: 1.2,
                   fontWeight: FontWeight.w600)),
         ]),
       );
@@ -276,77 +283,97 @@ class _TicketCard extends StatelessWidget {
       child: CustomPaint(
         painter: _GlowPainter(_posterH, glow),
         child: ClipPath(
-        clipper: const _NotchClipper(_posterH),
-        child: Column(children: [
-          // Poster
-          Container(
-            height: _posterH,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: m.colors,
+          clipper: const _NotchClipper(_posterH),
+          child: Column(children: [
+            // Poster
+            Container(
+              height: _posterH,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: m.colors,
+                ),
+              ),
+              child: Stack(fit: StackFit.expand, children: [
+                if (m.posterAsset != null)
+                  Image.asset(m.posterAsset!,
+                      fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+                if (m.posterAsset == null)
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                      child: Text(m.title.toUpperCase(),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: const TextStyle(
+                              fontSize: 18,
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+              ]),
+            ),
+            // Bagian detail + barcode (responsif dengan FittedBox agar tidak overflow di device apapun)
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+                color: const Color(0xFFE9EEF4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: _w - 28,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(
+                          height: 10,
+                          child: Center(child: DashedLine(color: Colors.black45)),
+                        ),
+                        const SizedBox(height: 5),
+                        Row(children: [
+                          _info('Date', t.date, flex: 3),
+                          _info('Time', t.time, flex: 2),
+                        ]),
+                        const SizedBox(height: 5),
+                        Row(children: [
+                          _info('Row', seatRows(t.seats), flex: 1),
+                          _info('Seats', seatNumbers(t.seats), flex: 2),
+                          _info('Payment', t.payment.isNotEmpty ? t.payment : 'GOPAY', flex: 2),
+                        ]),
+                        const SizedBox(height: 7),
+                        SizedBox(
+                          height: 32,
+                          child: BarcodeWidget(
+                            barcode: Barcode.code128(),
+                            data: t.id,
+                            drawText: false,
+                            color: Colors.black,
+                            errorBuilder: (_, __) => const SizedBox(),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          t.id,
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 10,
+                            letterSpacing: 2,
+                            height: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
-            child: Stack(fit: StackFit.expand, children: [
-              if (m.posterAsset != null)
-                Image.asset(m.posterAsset!,
-                    fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                  child: Text(m.title.toUpperCase(),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      style: const TextStyle(
-                          fontSize: 20,
-                          letterSpacing: 3,
-                          fontWeight: FontWeight.w600)),
-                ),
-              ),
-            ]),
-          ),
-          // Bagian detail + barcode
-          Container(
-            height: _h - _posterH,
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            color: const Color(0xFFE9EEF4),
-            child: Column(children: [
-              const SizedBox(
-                  height: 12,
-                  child: Center(child: DashedLine(color: Colors.black45))),
-              Row(children: [
-                _info('Date', t.date, flex: 3),
-                _info('Time', t.time, flex: 2),
-              ]),
-              const SizedBox(height: 4),
-              Row(children: [
-                _info('Row', seatRows(t.seats), flex: 1),
-                _info('Seats', seatNumbers(t.seats), flex: 2),
-                _info('Payment', t.payment.isNotEmpty ? t.payment : 'GOPAY', flex: 2),
-              ]),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 34,
-                child: BarcodeWidget(
-                  barcode: Barcode.code128(),
-                  data: t.id,
-                  drawText: false,
-                  color: Colors.black,
-                  errorBuilder: (_, __) => const SizedBox(),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(t.id,
-                  style: const TextStyle(
-                      color: Colors.black54, fontSize: 10, letterSpacing: 2)),
-            ]),
-          ),
-        ]),
-      ),
+          ]),
+        ),
       ),
     );
   }
