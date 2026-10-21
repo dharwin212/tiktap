@@ -35,72 +35,8 @@ create policy "Pengguna dapat menyisipkan profil sendiri"
   on public.profiles for insert
   with check (auth.uid() = id);
 
--- Trigger: Otomatis buat profil saat ada registrasi baru (Email, Google, Facebook)
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, name, email, phone, photo_url)
-  values (
-    new.id,
-    coalesce(
-      new.raw_user_meta_data->>'full_name',
-      new.raw_user_meta_data->>'name',
-      split_part(new.email, '@', 1)
-    ),
-    new.email,
-    coalesce(new.raw_user_meta_data->>'phone', ''),
-    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', null)
-  )
-  on conflict (id) do update set
-    email = excluded.email,
-    name = coalesce(excluded.name, profiles.name);
-  return new;
-end;
-$$ language plpgsql security definer;
 
--- Pasang trigger ke tabel auth bawaan Supabase
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
-
-
--- 2. TABEL TIKET BIOSKOP
-create table if not exists public.tickets (
-  id text primary key,
-  user_id uuid references auth.users on delete cascade not null,
-  movie_title text not null,
-  cinema text not null,
-  date text not null,
-  time text not null,
-  seats text[] not null,
-  total integer not null,
-  payment text default '',
-  show_at timestamp with time zone not null,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null
-);
-
-alter table public.tickets enable row level security;
-
--- Policy: Pengguna hanya dapat membaca tiket miliknya sendiri
-drop policy if exists "Pengguna hanya melihat tiket miliknya" on public.tickets;
-create policy "Pengguna hanya melihat tiket miliknya"
-  on public.tickets for select
-  using (auth.uid() = user_id);
-
--- Policy: Pengguna dapat menyimpan tiket baru miliknya
-drop policy if exists "Pengguna dapat menyimpan tiket baru" on public.tickets;
-create policy "Pengguna dapat menyimpan tiket baru"
-  on public.tickets for insert
-  with check (auth.uid() = user_id);
-
-drop policy if exists "Pengguna dapat mengupdate tiket miliknya" on public.tickets;
-create policy "Pengguna dapat mengupdate tiket miliknya"
-  on public.tickets for update
-  using (auth.uid() = user_id);
-
-
--- 3. TABEL METODE PEMBAYARAN (PAYMENT METHODS)
+-- 2. TABEL METODE PEMBAYARAN (PAYMENT METHODS)
 create table if not exists public.payment_methods (
   id text primary key,
   user_id uuid references auth.users on delete cascade not null,
@@ -135,3 +71,101 @@ drop policy if exists "Pengguna dapat menghapus metode pembayaran miliknya" on p
 create policy "Pengguna dapat menghapus metode pembayaran miliknya"
   on public.payment_methods for delete
   using (auth.uid() = user_id);
+
+
+-- 3. TABEL TIKET BIOSKOP
+create table if not exists public.tickets (
+  id text primary key,
+  user_id uuid references auth.users on delete cascade not null,
+  movie_title text not null,
+  cinema text not null,
+  date text not null,
+  time text not null,
+  seats text[] not null,
+  total integer not null,
+  payment text default '',
+  show_at timestamp with time zone not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.tickets enable row level security;
+
+-- Policy: Pengguna hanya dapat membaca tiket miliknya sendiri
+drop policy if exists "Pengguna hanya melihat tiket miliknya" on public.tickets;
+create policy "Pengguna hanya melihat tiket miliknya"
+  on public.tickets for select
+  using (auth.uid() = user_id);
+
+-- Policy: Pengguna dapat menyimpan tiket baru miliknya
+drop policy if exists "Pengguna dapat menyimpan tiket baru" on public.tickets;
+create policy "Pengguna dapat menyimpan tiket baru"
+  on public.tickets for insert
+  with check (auth.uid() = user_id);
+
+drop policy if exists "Pengguna dapat mengupdate tiket miliknya" on public.tickets;
+create policy "Pengguna dapat mengupdate tiket miliknya"
+  on public.tickets for update
+  using (auth.uid() = user_id);
+
+
+-- 4. TRIGGER: Registrasi Pengguna Baru (Profil & Metode Pembayaran Default)
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  -- Buat profil
+  insert into public.profiles (id, name, email, phone, photo_url)
+  values (
+    new.id,
+    coalesce(
+      new.raw_user_meta_data->>'full_name',
+      new.raw_user_meta_data->>'name',
+      split_part(new.email, '@', 1)
+    ),
+    new.email,
+    coalesce(new.raw_user_meta_data->>'phone', ''),
+    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture', null)
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    name = coalesce(excluded.name, profiles.name);
+
+  -- Otomatis buatkan metode pembayaran default (GOPAY, DANA, OVO, BCA)
+  insert into public.payment_methods (id, user_id, type, number, is_default)
+  values
+    ('pm_gopay_' || new.id, new.id, 'GOPAY', '081234567890', true),
+    ('pm_dana_' || new.id, new.id, 'DANA', '081234567890', false),
+    ('pm_ovo_' || new.id, new.id, 'OVO', '081234567890', false),
+    ('pm_bca_' || new.id, new.id, 'Transfer Bank (BCA)', '1234567890', false)
+  on conflict (id) do nothing;
+
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Pasang trigger ke tabel auth bawaan Supabase
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
+
+-- 5. SEED: Buat Metode Pembayaran Default untuk Semua Akun yang Sudah Terdaftar
+insert into public.payment_methods (id, user_id, type, number, is_default)
+select 'pm_gopay_' || id, id, 'GOPAY', '081234567890', true
+from auth.users
+on conflict (id) do update set is_default = excluded.is_default;
+
+insert into public.payment_methods (id, user_id, type, number, is_default)
+select 'pm_dana_' || id, id, 'DANA', '081234567890', false
+from auth.users
+on conflict (id) do nothing;
+
+insert into public.payment_methods (id, user_id, type, number, is_default)
+select 'pm_ovo_' || id, id, 'OVO', '081234567890', false
+from auth.users
+on conflict (id) do nothing;
+
+insert into public.payment_methods (id, user_id, type, number, is_default)
+select 'pm_bca_' || id, id, 'Transfer Bank (BCA)', '1234567890', false
+from auth.users
+on conflict (id) do nothing;

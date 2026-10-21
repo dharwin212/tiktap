@@ -90,18 +90,37 @@ class AuthService {
           .select()
           .eq('user_id', userId);
 
-      if ((data as List).isEmpty) return [];
-      return (data as List).map((row) {
-        return PaymentMethod(
-          id: row['id'] as String,
-          type: row['type'] as String,
-          number: row['number'] as String,
-        );
-      }).toList();
+      if ((data as List).isNotEmpty) {
+        return (data as List).map((row) {
+          return PaymentMethod(
+            id: row['id'] as String,
+            type: row['type'] as String,
+            number: row['number'] as String,
+          );
+        }).toList();
+      }
     } catch (e) {
       debugPrint('[AuthService] Gagal memuat payment methods dari db: $e');
-      return [];
     }
+
+    // Auto-seed ke database Supabase bila belum ada data
+    final defs = defaultPaymentMethods();
+    if (SupabaseConfig.isConfigured) {
+      try {
+        for (final m in defs) {
+          await Supabase.instance.client.from('payment_methods').upsert({
+            'id': '${m.id}_$userId',
+            'user_id': userId,
+            'type': m.type,
+            'number': m.number,
+            'is_default': m.id == 'pm_gopay',
+          });
+        }
+      } catch (e) {
+        debugPrint('[AuthService] Gagal seed payment methods ke db: $e');
+      }
+    }
+    return List.of(defs);
   }
 
   static List<PaymentMethod> _loadPayments(String email) {

@@ -297,7 +297,7 @@ class _OrderScreenState extends State<OrderScreen> {
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(_sel?.label ?? 'Pilih metode pembayaran',
+                          Text(_sel?.type ?? 'GOPAY',
                               style: const TextStyle(
                                   fontWeight: FontWeight.w600, fontSize: 15)),
                           const Icon(Icons.chevron_right, color: Colors.white70),
