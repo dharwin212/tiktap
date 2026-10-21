@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'auth_service.dart';
 import 'supabase_config.dart';
@@ -59,6 +60,20 @@ class SupabaseSocialAuth implements SocialAuth {
     return null;
   }
 
+  static Future<bool> _isProviderEnabled(String provider) async {
+    try {
+      final url = Uri.parse(
+          '${SupabaseConfig.url}/auth/v1/authorize?provider=$provider');
+      final res = await http.get(url).timeout(const Duration(seconds: 4));
+      if (res.statusCode == 400 && res.body.contains('provider is not enabled')) {
+        return false;
+      }
+      return true;
+    } catch (_) {
+      return true;
+    }
+  }
+
   @override
   Future<SocialProfile?> signIn(BuildContext context, String provider) async {
     // Jika belum memasukkan URL & Anon Key Supabase, tampilkan dialog panduan/simulasi
@@ -74,19 +89,100 @@ class SupabaseSocialAuth implements SocialAuth {
       return const SimulatedSocialAuth().signIn(context, provider);
     }
 
+    final isGoogle = provider == 'google';
+    final label = isGoogle ? 'Google' : 'Facebook';
+
+    // Cek apakah provider sudah diaktifkan di dashboard Supabase
+    final enabled = await _isProviderEnabled(provider);
+    if (!enabled && context.mounted) {
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF0D1824),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              const Icon(Icons.info_outline, color: Colors.amberAccent, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('Login $label Belum Aktif',
+                    style: const TextStyle(
+                        fontSize: 18,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Provider $label belum diaktifkan di dashboard Supabase Anda (Authentication -> Providers -> $label).',
+                style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0x0FFFFFFF),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Text(
+                  '💡 Masuk Cepat (simulasi) memungkinkan Anda langsung login dengan akun $label tanpa perlu menunggu setup Google Cloud Console.',
+                  style: const TextStyle(color: Colors.white60, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop('cancel'),
+              child: const Text('Batal', style: TextStyle(color: Colors.white60)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.lightBlue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () => Navigator.of(ctx).pop('quick'),
+              child: const Text('Masuk Cepat'),
+            ),
+          ],
+        ),
+      );
+
+      if (choice == 'quick' && context.mounted) {
+        return const SimulatedSocialAuth().signIn(context, provider);
+      }
+      return null;
+    }
+
     final oAuthProvider =
-        provider == 'google' ? OAuthProvider.google : OAuthProvider.facebook;
+        isGoogle ? OAuthProvider.google : OAuthProvider.facebook;
     const redirectUrl =
         kIsWeb ? null : 'io.supabase.tiktap://login-callback';
 
-    final success = await Supabase.instance.client.auth.signInWithOAuth(
-      oAuthProvider,
-      redirectTo: redirectUrl,
-      authScreenLaunchMode: LaunchMode.externalApplication,
-    );
+    try {
+      final success = await Supabase.instance.client.auth.signInWithOAuth(
+        oAuthProvider,
+        redirectTo: redirectUrl,
+        authScreenLaunchMode: LaunchMode.externalApplication,
+      );
 
-    if (!success) {
-      throw 'Gagal membuka halaman login $provider.';
+      if (!success) {
+        throw 'Gagal membuka halaman login $label.';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memulai login $label: $e')),
+        );
+      }
+      return null;
     }
 
     // Pada web, browser akan redirect.

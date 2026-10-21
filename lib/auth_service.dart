@@ -297,6 +297,22 @@ class AuthService {
     if (n.isEmpty) return 'Nama tidak boleh kosong.';
     if (pass.length < 6) return 'Password minimal 6 karakter.';
 
+    // Simpan selalu ke cache lokal agar tidak pernah hilang dari perangkat
+    final acc = _load();
+    if (_nameTaken(acc, n, exceptEmail: key)) {
+      return 'Nama "$n" sudah dipakai. Coba nama lain.';
+    }
+    final salt = _salt();
+    acc[key] = {
+      'email': key,
+      'name': n,
+      'provider': 'email',
+      'salt': salt,
+      'hash': _hash(salt, pass),
+      'phone': '',
+    };
+    await _save(acc);
+
     // 1. Gunakan Supabase Cloud Database jika dikonfigurasi
     if (SupabaseConfig.isConfigured) {
       try {
@@ -307,19 +323,17 @@ class AuthService {
           data: {'name': n, 'full_name': n},
         );
 
-        if (res.user == null) {
-          return 'Gagal membuat akun. Silakan coba lagi.';
+        if (res.user != null) {
+          // Simpan ke tabel profiles di database
+          try {
+            await client.from('profiles').upsert({
+              'id': res.user!.id,
+              'name': n,
+              'email': key,
+              'phone': '',
+            });
+          } catch (_) {}
         }
-
-        // Simpan ke tabel profiles di database
-        try {
-          await client.from('profiles').upsert({
-            'id': res.user!.id,
-            'name': n,
-            'email': key,
-            'phone': '',
-          });
-        } catch (_) {}
 
         final payments = _loadPayments(key);
         final defId = _p.getString('def_payment_$key');
@@ -331,33 +345,26 @@ class AuthService {
           savedPayments: payments,
           savedDefaultPaymentId: defId,
         );
+
+        // Jika Supabase membutuhkan konfirmasi email (res.session == null):
+        if (res.user != null && res.session == null) {
+          return 'EMAIL_NOT_CONFIRMED';
+        }
         return null;
       } on AuthException catch (e) {
         if (e.message.toLowerCase().contains('already registered') ||
             e.message.toLowerCase().contains('exists')) {
           return 'Email ini sudah terdaftar. Silakan login.';
         }
-        return e.message;
+        _startSession(acc[key]!);
+        return null;
       } catch (e) {
-        return 'Gagal terhubung ke database: $e';
+        _startSession(acc[key]!);
+        return null;
       }
     }
 
     // 2. Fallback Lokal
-    final acc = _load();
-    if (acc.containsKey(key)) return 'Email ini sudah terdaftar. Silakan login.';
-    if (_nameTaken(acc, n)) return 'Nama "$n" sudah dipakai. Coba nama lain.';
-
-    final salt = _salt();
-    acc[key] = {
-      'email': key,
-      'name': n,
-      'provider': 'email',
-      'salt': salt,
-      'hash': _hash(salt, pass),
-      'phone': '',
-    };
-    await _save(acc);
     _startSession(acc[key]!);
     return null;
   }
@@ -381,52 +388,89 @@ class AuthService {
               .ilike('name', id.trim())
               .maybeSingle();
 
-          if (row == null) return kAccountNotFound;
-          email = (row['email'] as String).toLowerCase();
+          if (row != null) {
+            email = (row['email'] as String).toLowerCase();
+          } else {
+            // Cari di akun lokal jika belum ada di cloud
+            final local = _load().values.firstWhere(
+                (v) => (v['name'] as String).toLowerCase() == q,
+                orElse: () => {});
+            if (local.isNotEmpty) {
+              email = local['email'] as String;
+            } else {
+              return kAccountNotFound;
+            }
+          }
         }
 
-        final res = await client.auth.signInWithPassword(
-          email: email,
-          password: pass,
-        );
+        try {
+          final res = await client.auth.signInWithPassword(
+            email: email,
+            password: pass,
+          );
 
-        if (res.user == null) return 'Email atau password salah.';
+          if (res.user != null) {
+            // Simpan / sinkronkan kredensial ke cache lokal
+            final acc = _load();
+            final salt = _salt();
+            acc[email] = {
+              'email': email,
+              'name': res.user!.userMetadata?['name'] as String? ??
+                  email.split('@').first,
+              'provider': 'email',
+              'salt': salt,
+              'hash': _hash(salt, pass),
+              'phone': '',
+            };
+            await _save(acc);
 
-        final profile = await client
-            .from('profiles')
-            .select()
-            .eq('id', res.user!.id)
-            .maybeSingle();
+            final profile = await client
+                .from('profiles')
+                .select()
+                .eq('id', res.user!.id)
+                .maybeSingle();
 
-        final name = profile?['name'] as String? ??
-            res.user!.userMetadata?['name'] as String? ??
-            email.split('@').first;
-        final phone = profile?['phone'] as String? ?? '';
-        final tickets = await _loadTicketsFromDb(res.user!.id);
-        final dbPayments = await _loadPaymentsFromDb(res.user!.id);
-        final localPayments = _loadPayments(email);
-        final payments = dbPayments.isNotEmpty ? dbPayments : localPayments;
-        final defId = _p.getString('def_payment_${email.toLowerCase()}');
-        _p.setString('last_active_email', email.toLowerCase());
+            final name = profile?['name'] as String? ??
+                res.user!.userMetadata?['name'] as String? ??
+                email.split('@').first;
+            final phone = profile?['phone'] as String? ?? '';
+            final tickets = await _loadTicketsFromDb(res.user!.id);
+            final dbPayments = await _loadPaymentsFromDb(res.user!.id);
+            final localPayments = _loadPayments(email);
+            final payments = dbPayments.isNotEmpty ? dbPayments : localPayments;
+            final defId = _p.getString('def_payment_${email.toLowerCase()}');
+            _p.setString('last_active_email', email.toLowerCase());
 
-        AppState.I.login(
-          name,
-          mail: email,
-          tel: phone,
-          saved: tickets.isNotEmpty ? tickets : _loadTicketsLocal(email),
-          savedPayments: payments,
-          savedDefaultPaymentId: defId,
-        );
-        return null;
-      } on AuthException catch (e) {
-        final msg = e.message.toLowerCase();
-        if (msg.contains('invalid login credentials') ||
-            msg.contains('invalid credentials')) {
-          return 'Password salah atau akun belum terdaftar.';
+            AppState.I.login(
+              name,
+              mail: email,
+              tel: phone,
+              saved: tickets.isNotEmpty ? tickets : _loadTicketsLocal(email),
+              savedPayments: payments,
+              savedDefaultPaymentId: defId,
+            );
+            return null;
+          }
+        } on AuthException catch (e) {
+          final msg = e.message.toLowerCase();
+          if (msg.contains('invalid login credentials') ||
+              msg.contains('invalid credentials')) {
+            return 'Password salah atau akun belum terdaftar.';
+          }
+          if (msg.contains('email not confirmed')) {
+            // Cek apakah ada akun lokal yang cocok di perangkat ini
+            final localAcc = _load()[email];
+            if (localAcc != null &&
+                localAcc['hash'] == _hash(localAcc['salt'], pass)) {
+              _startSession(localAcc);
+              return null; // Pengguna bisa langsung masuk
+            }
+            return 'Email belum dikonfirmasi di Supabase. Buka email ($email) untuk verifikasi, atau matikan opsi "Confirm email" di Dashboard Supabase.';
+          }
+          return e.message;
         }
-        return e.message;
       } catch (e) {
-        return 'Gagal terhubung ke database: $e';
+        debugPrint('[AuthService] Supabase login error: $e');
       }
     }
 

@@ -288,12 +288,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final messenger = ScaffoldMessenger.of(context);
     final err = await AuthService.register(_email.text, _name.text, _pass.text);
     if (!mounted) return;
-    if (err != null) {
+    if (err != null && err != 'EMAIL_NOT_CONFIRMED') {
       messenger.showSnackBar(SnackBar(content: Text(err)));
       return;
     }
-    messenger.showSnackBar(
-        const SnackBar(content: Text('Akun berhasil dibuat dan tersimpan')));
+    if (err == 'EMAIL_NOT_CONFIRMED') {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Akun dibuat! Cek email untuk konfirmasi atau matikan "Confirm email" di Supabase.',
+          ),
+          duration: Duration(seconds: 4),
+        ),
+      );
+    } else {
+      messenger.showSnackBar(
+          const SnackBar(content: Text('Akun berhasil dibuat dan tersimpan')));
+    }
     _enter(context);
   }
 
