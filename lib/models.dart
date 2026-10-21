@@ -180,6 +180,7 @@ const topMovies = [
     rating: 9.3,
     price: 45000,
     colors: [Color(0xFFB4541C), Color(0xFF241008)],
+    posterAsset: 'assets/posters/the_shawsank_reedemption.jpg',
   ),
   Movie(
     title: 'The Godfather',

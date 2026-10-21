@@ -21,7 +21,8 @@ class _SeatScreenState extends State<SeatScreen> {
   int _date = 0;
 
   DateTime _showAt(int d, int t) {
-    final day = DateTime.now().add(Duration(days: d));
+    final now = DateTime.now();
+    final day = DateTime(now.year, now.month, now.day).add(Duration(days: d));
     final p = _times[t].split(':');
     return DateTime(day.year, day.month, day.day, int.parse(p[0]), int.parse(p[1]));
   }
@@ -32,7 +33,7 @@ class _SeatScreenState extends State<SeatScreen> {
     for (var t = 0; t < _times.length; t++) {
       if (!_past(d, t)) return t;
     }
-    return 0;
+    return -1;
   }
 
   @override
@@ -41,11 +42,14 @@ class _SeatScreenState extends State<SeatScreen> {
     // Pilih tanggal & jam terdekat yang belum lewat.
     for (var d = 0; d < _dates.length; d++) {
       final t = _firstValid(d);
-      if (!_past(d, t)) {
+      if (t != -1) {
         _date = d;
         _time = t;
         break;
       }
+    }
+    if (_firstValid(_date) == -1) {
+      _time = 0;
     }
   }
   final Set<String> _seats = {};
@@ -68,6 +72,64 @@ class _SeatScreenState extends State<SeatScreen> {
       showAt: _showAt(_date, _time),
     ));
     Navigator.of(context).pop();
+  }
+
+  void _showMovieInfo(Movie m) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0D1824),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  PosterCard(movie: m, w: 70, h: 100),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(m.title,
+                            style: const TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 6),
+                        Text('Genre: ${m.genre}',
+                            style: const TextStyle(color: Colors.white70)),
+                        Text('Durasi: ${m.minutes ~/ 60}j ${m.minutes % 60}m',
+                            style: const TextStyle(color: Colors.white70)),
+                        Text('Rating: ⭐ ${m.rating > 0 ? m.rating.toStringAsFixed(1) : "Segera"}',
+                            style: const TextStyle(color: AppColors.yellow)),
+                        Text('Harga: ${rupiah(m.price)} / kursi',
+                            style: const TextStyle(
+                                color: AppColors.lightBlue,
+                                fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Silakan pilih tanggal tayang, jam penayangan, dan nomor kursi yang kamu inginkan, lalu tekan "Lanjut" untuk melakukan pembayaran.',
+                style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              GradientButton(
+                text: 'Tutup',
+                onTap: () => Navigator.of(ctx).pop(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _chip(String t, bool on, VoidCallback f) => GestureDetector(
@@ -151,7 +213,12 @@ class _SeatScreenState extends State<SeatScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
                 children: [
                   Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    PosterCard(movie: m, w: 80, h: 116),
+                    PosterCard(
+                      movie: m,
+                      w: 80,
+                      h: 116,
+                      onTap: () => _showMovieInfo(m),
+                    ),
                     Expanded(
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,10 +242,23 @@ class _SeatScreenState extends State<SeatScreen> {
                   const SizedBox(height: 10),
                   Row(children: [
                     for (var i = 0; i < _dates.length; i++)
-                      _chip(_dates[i], _date == i, () => setState(() {
-                            _date = i;
-                            if (_past(_date, _time)) _time = _firstValid(_date);
-                          })),
+                      _chip(_dates[i], _date == i, () {
+                        final t = _firstValid(i);
+                        if (t == -1) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Semua jam tayang untuk hari ini sudah lewat. Silakan pilih hari Besok atau Lusa.'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                          return;
+                        }
+                        setState(() {
+                          _date = i;
+                          if (_past(_date, _time)) _time = t;
+                        });
+                      }),
                   ]),
                   const SizedBox(height: 16),
                   const Text('Jam tayang',
@@ -257,7 +337,26 @@ class _SeatScreenState extends State<SeatScreen> {
                           child: GradientButton(
                             text: 'Lanjut',
                             onTap: () {
-                              if (_seats.isEmpty) return;
+                              if (_seats.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Silakan pilih minimal 1 kursi terlebih dahulu untuk melanjutkan ke pembayaran.'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                                return;
+                              }
+                              if (_past(_date, _time)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Jam tayang yang dipilih sudah lewat. Silakan pilih jam lain.'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                                return;
+                              }
                               _next();
                             },
                           ),

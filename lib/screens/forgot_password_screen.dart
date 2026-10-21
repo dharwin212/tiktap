@@ -85,6 +85,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         controller: c,
         obscure: obscure,
         suffix: suffix,
+        keyboardType: keyboardType,
         labelColor: Colors.white,
         hintColor: Colors.white,
         iconColor: Colors.white,

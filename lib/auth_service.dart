@@ -156,8 +156,9 @@ class AuthService {
       if (user != null) {
         try {
           for (final m in list) {
+            final dbId = m.id.contains(user.id) ? m.id : '${m.id}_${user.id}';
             await Supabase.instance.client.from('payment_methods').upsert({
-              'id': m.id,
+              'id': dbId,
               'user_id': user.id,
               'type': m.type,
               'number': m.number,
@@ -510,6 +511,19 @@ class AuthService {
     if (a['hash'] != _hash(a['salt'], pass)) return 'Password salah.';
     _startSession(a);
     return null;
+  }
+
+  // ---- Logout Akun ----
+  static Future<void> logout() async {
+    if (SupabaseConfig.isConfigured) {
+      try {
+        await Supabase.instance.client.auth.signOut();
+      } catch (e) {
+        debugPrint('[AuthService] Supabase sign out error: $e');
+      }
+    }
+    await _p.remove('last_active_email');
+    AppState.I.logout();
   }
 
   // ---- Login Sosial (Google & Facebook) ----

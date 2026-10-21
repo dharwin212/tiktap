@@ -25,51 +25,56 @@ class TicketScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final list = AppState.I.active;
+    return ListenableBuilder(
+      listenable: AppState.I,
+      builder: (context, _) {
+        final list = AppState.I.active;
 
-    if (list.isEmpty) {
-      return Column(children: [
-        _header(),
-        Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.confirmation_number_outlined,
-                    size: 56, color: Colors.white54),
-                const SizedBox(height: 12),
-                const Text('Belum ada tiket',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                const Text('Barcode tiket muncul di sini setelah kamu membayar.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70)),
-                const SizedBox(height: 20),
-                SizedBox(
-                    width: 180,
-                    child: GradientButton(
-                        text: 'Pesan tiket', onTap: () => AppState.I.goTo(0))),
-              ]),
+        if (list.isEmpty) {
+          return Column(children: [
+            _header(),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.confirmation_number_outlined,
+                        size: 56, color: Colors.white54),
+                    const SizedBox(height: 12),
+                    const Text('Belum ada tiket',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    const Text('Barcode tiket muncul di sini setelah kamu membayar.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                        width: 180,
+                        child: GradientButton(
+                            text: 'Pesan tiket', onTap: () => AppState.I.goTo(0))),
+                  ]),
+                ),
+              ),
+            ),
+            SizedBox(height: 80 + MediaQuery.paddingOf(context).bottom),
+          ]);
+        }
+
+        return Column(children: [
+          _header(),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+            child: Text(
+              'Once you buy a movie ticket simply scan the barcode to access your movie.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, height: 1.35),
             ),
           ),
-        ),
-        SizedBox(height: 80 + MediaQuery.paddingOf(context).bottom),
-      ]);
-    }
-
-    return Column(children: [
-      _header(),
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 8),
-        child: Text(
-          'Once you buy a movie ticket simply scan the barcode to access your movie.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, height: 1.35),
-        ),
-      ),
-      Expanded(child: _TicketCarousel(tickets: list)),
-      SizedBox(height: 80 + MediaQuery.paddingOf(context).bottom),
-    ]);
+          Expanded(child: _TicketCarousel(tickets: list)),
+          SizedBox(height: 80 + MediaQuery.paddingOf(context).bottom),
+        ]);
+      },
+    );
   }
 }
 

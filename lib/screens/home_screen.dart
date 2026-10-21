@@ -198,17 +198,21 @@ class _HomeScreenState extends State<HomeScreen> {
             runSpacing: 18,
             children: [
               for (final m in res)
-                SizedBox(
-                  width: 100,
-                  child: Column(children: [
-                    PosterCard(movie: m, gap: 0, onTap: () => _open(m)),
-                    const SizedBox(height: 6),
-                    Text(m.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 12)),
-                  ]),
+                GestureDetector(
+                  onTap: () => _open(m),
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: 100,
+                    child: Column(children: [
+                      PosterCard(movie: m, gap: 0),
+                      const SizedBox(height: 6),
+                      Text(m.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 12)),
+                    ]),
+                  ),
                 ),
             ],
           ),

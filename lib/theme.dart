@@ -114,6 +114,7 @@ class GlassField extends StatelessWidget {
   final bool obscure;
   final Widget? suffix;
   final ValueChanged<String>? onChanged;
+  final TextInputType? keyboardType;
   final Color labelColor;
   final Color hintColor;
   final Color iconColor;
@@ -126,6 +127,7 @@ class GlassField extends StatelessWidget {
     this.obscure = false,
     this.suffix,
     this.onChanged,
+    this.keyboardType,
     this.labelColor = Colors.white70,
     this.hintColor = Colors.white54,
     this.iconColor = Colors.white54,
@@ -147,6 +149,7 @@ class GlassField extends StatelessWidget {
               controller: controller,
               obscureText: obscure,
               onChanged: onChanged,
+              keyboardType: keyboardType,
               style: const TextStyle(color: Colors.white, fontSize: 14),
               decoration: InputDecoration(
                 hintText: hint,

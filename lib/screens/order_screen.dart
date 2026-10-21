@@ -4,6 +4,7 @@ import '../nav_menu.dart';
 import '../theme.dart';
 import 'home_screen.dart';
 import 'payment_methods_screen.dart';
+import 'seat_screen.dart';
 
 class _Voucher {
   final String name;
@@ -179,167 +180,179 @@ class _OrderScreenState extends State<OrderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final o = AppState.I.order;
-    if (o == null) {
-      return Column(children: [
-        _header(),
-        Expanded(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const Icon(Icons.shopping_bag_outlined,
-                    size: 56, color: Colors.white54),
-                const SizedBox(height: 12),
-                const Text('Belum ada pesanan',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 6),
-                const Text('Pilih film dan kursi di beranda dulu.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.white70)),
-                const SizedBox(height: 20),
-                SizedBox(
-                    width: 180,
-                    child: GradientButton(
-                        text: 'Pilih film', onTap: () => AppState.I.goTo(0))),
-              ]),
-            ),
-          ),
-        ),
-        SizedBox(height: 80 + MediaQuery.paddingOf(context).bottom),
-      ]);
-    }
-
-    final qty = o.seats.length;
-    final price = o.movie.price * qty;
-    final adm = _admPerTicket * qty;
-    final promo = _vouchers[_v].amount;
-    final total = (price + adm - promo).clamp(0, 1 << 31).toInt();
-
-    return ListView(
-      padding: EdgeInsets.only(bottom: 96 + MediaQuery.paddingOf(context).bottom),
-      children: [
-        _header(),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(children: [
-            // Kartu film
-            GlassBox(
-              padding: const EdgeInsets.all(12),
-              radius: 18,
-              child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                PosterCard(movie: o.movie, w: 92, h: 134),
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(o.movie.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.w700)),
-                        Text(o.cinema,
-                            style: const TextStyle(
-                                color: AppColors.lightBlue, fontSize: 14)),
-                        const SizedBox(height: 4),
-                        _detail('Date', o.date),
-                        _detail('Time', o.time),
-                        _detail('Row', seatRows(o.seats)),
-                        _detail('Seats', seatNumbers(o.seats)),
-                      ]),
+    return ListenableBuilder(
+      listenable: AppState.I,
+      builder: (context, _) {
+        final o = AppState.I.order;
+        if (o == null) {
+          return Column(children: [
+            _header(),
+            Expanded(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.shopping_bag_outlined,
+                        size: 56, color: Colors.white54),
+                    const SizedBox(height: 12),
+                    const Text('Belum ada pesanan',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    const Text('Pilih film dan kursi di beranda dulu.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                        width: 180,
+                        child: GradientButton(
+                            text: 'Pilih film', onTap: () => AppState.I.goTo(0))),
+                  ]),
                 ),
-              ]),
+              ),
             ),
-            const SizedBox(height: 14),
-            // Rincian harga
-            GlassBox(
-              radius: 18,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(children: [
-                  const Expanded(child: Text('Ticket Price')),
-                  Text('${rupiah(o.movie.price)} x $qty',
-                      style: const TextStyle(fontSize: 13)),
-                  Expanded(
-                      child: Text(rupiah(price), textAlign: TextAlign.right)),
-                ]),
-                const SizedBox(height: 10),
-                _kv('Adm Fee', rupiah(adm)),
-                _kv('Promo', promo == 0 ? 'Rp 0' : '- ${rupiah(promo)}'),
-                const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: DashedLine()),
-                _kv('Total Payment', rupiah(total), bold: true),
-                const SizedBox(height: 6),
-                const Text('• Tickets can not be exchanged or refunded.',
-                    style: TextStyle(color: Colors.white70, fontSize: 11)),
-                const SizedBox(height: 2),
-                const Text(
-                    '• Children (2 years old or above) are required to purchase ticket.',
-                    style: TextStyle(color: Colors.white70, fontSize: 11)),
-              ]),
-            ),
-            const SizedBox(height: 14),
-            // Pembayaran & voucher
-            GlassBox(
-              radius: 18,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            SizedBox(height: 80 + MediaQuery.paddingOf(context).bottom),
+          ]);
+        }
+
+        final qty = o.seats.length;
+        final price = o.movie.price * qty;
+        final adm = _admPerTicket * qty;
+        final promo = _vouchers[_v].amount;
+        final total = (price + adm - promo).clamp(0, 1 << 31).toInt();
+
+        return ListView(
+          padding: EdgeInsets.only(bottom: 96 + MediaQuery.paddingOf(context).bottom),
+          children: [
+            _header(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('Pay with',
-                      style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
+                // Kartu film
+                GlassBox(
+                  padding: const EdgeInsets.all(12),
+                  radius: 18,
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    PosterCard(
+                      movie: o.movie,
+                      w: 92,
+                      h: 134,
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => SeatScreen(movie: o.movie)),
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(o.movie.title,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.w700)),
+                            Text(o.cinema,
+                                style: const TextStyle(
+                                    color: AppColors.lightBlue, fontSize: 14)),
+                            const SizedBox(height: 4),
+                            _detail('Date', o.date),
+                            _detail('Time', o.time),
+                            _detail('Row', seatRows(o.seats)),
+                            _detail('Seats', seatNumbers(o.seats)),
+                          ]),
+                    ),
+                  ]),
                 ),
-                InkWell(
-                  onTap: _choosePayment,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(_sel?.type ?? 'GOPAY',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 15)),
-                          const Icon(Icons.chevron_right, color: Colors.white70),
-                        ]),
-                  ),
+                const SizedBox(height: 14),
+                // Rincian harga
+                GlassBox(
+                  radius: 18,
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Row(children: [
+                      const Expanded(child: Text('Ticket Price')),
+                      Text('${rupiah(o.movie.price)} x $qty',
+                          style: const TextStyle(fontSize: 13)),
+                      Expanded(
+                          child: Text(rupiah(price), textAlign: TextAlign.right)),
+                    ]),
+                    const SizedBox(height: 10),
+                    _kv('Adm Fee', rupiah(adm)),
+                    _kv('Promo', promo == 0 ? 'Rp 0' : '- ${rupiah(promo)}'),
+                    const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: DashedLine()),
+                    _kv('Total Payment', rupiah(total), bold: true),
+                    const SizedBox(height: 6),
+                    const Text('• Tickets can not be exchanged or refunded.',
+                        style: TextStyle(color: Colors.white70, fontSize: 11)),
+                    const SizedBox(height: 2),
+                    const Text(
+                        '• Children (2 years old or above) are required to purchase ticket.',
+                        style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  ]),
                 ),
-                const Divider(color: Colors.white24, height: 1),
-                InkWell(
-                  onTap: _chooseVoucher,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Use Voucher',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 15)),
-                                Text(
-                                    _v == 0
-                                        ? 'Promo: Rp 0'
-                                        : '${_vouchers[_v].name} - Promo: ${rupiah(promo)}',
-                                    style: const TextStyle(
-                                        color: Colors.white70, fontSize: 12)),
-                              ]),
-                          const Icon(Icons.chevron_right, color: Colors.white70),
-                        ]),
-                  ),
+                const SizedBox(height: 14),
+                // Pembayaran & voucher
+                GlassBox(
+                  radius: 18,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Pay with',
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
+                    ),
+                    InkWell(
+                      onTap: _choosePayment,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(_sel?.type ?? 'GOPAY',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600, fontSize: 15)),
+                              const Icon(Icons.chevron_right, color: Colors.white70),
+                            ]),
+                      ),
+                    ),
+                    const Divider(color: Colors.white24, height: 1),
+                    InkWell(
+                      onTap: _chooseVoucher,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Use Voucher',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15)),
+                                    Text(
+                                        _v == 0
+                                            ? 'Promo: Rp 0'
+                                            : '${_vouchers[_v].name} - Promo: ${rupiah(promo)}',
+                                        style: const TextStyle(
+                                            color: Colors.white70, fontSize: 12)),
+                                  ]),
+                              const Icon(Icons.chevron_right, color: Colors.white70),
+                            ]),
+                      ),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 18),
+                GradientButton(
+                  text: 'Confirm Order',
+                  onTap: () => _confirm(o, total),
                 ),
               ]),
             ),
-            const SizedBox(height: 18),
-            GradientButton(
-              text: 'Confirm Order',
-              onTap: () => _confirm(o, total),
-            ),
-          ]),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

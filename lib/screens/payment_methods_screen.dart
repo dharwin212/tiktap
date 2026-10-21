@@ -67,6 +67,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                             : '0812xxxxxxxx',
                     icon: _iconFor(type),
                     controller: c,
+                    keyboardType: TextInputType.number,
                   ),
                   if (err != null)
                     Padding(
