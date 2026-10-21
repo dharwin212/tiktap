@@ -13,11 +13,11 @@ Aplikasi TikTap kini telah dihubungkan dengan backend **Supabase** (PostgreSQL C
 
 ---
 
-## 2. Pasang Skema Database (Tabel Profil & Tiket)
+## 2. Pasang Skema Database (Tabel Profil, Tiket & Pembayaran)
 1. Di dashboard Supabase, buka menu **SQL Editor**.
 2. Klik **New query**, lalu salin dan tempel seluruh isi file [`supabase_schema.sql`](supabase_schema.sql).
 3. Klik tombol **Run**.
-   - Tabel `public.profiles` dan `public.tickets` akan otomatis dibuat lengkap dengan *Row Level Security (RLS)* dan trigger registrasi otomatis.
+   - Tabel `public.profiles`, `public.tickets`, dan `public.payment_methods` akan otomatis dibuat/diperbarui lengkap dengan *Row Level Security (RLS)* dan trigger registrasi otomatis. Skrip ini aman dijalankan berulang kali.
 
 ---
 

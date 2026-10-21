@@ -1,6 +1,7 @@
 -- ==============================================================================
 -- Skema Database TikTap (PostgreSQL untuk Supabase)
 -- Jalankan skrip ini di: Dashboard Supabase -> SQL Editor -> New Query -> Run
+-- Aman dijalankan berulang kali (Idempotent / Drop If Exists)
 -- ==============================================================================
 
 -- 1. TABEL PROFIL PENGGUNA
@@ -18,15 +19,18 @@ create table if not exists public.profiles (
 alter table public.profiles enable row level security;
 
 -- Policy: Semua orang yang login dapat melihat profil
+drop policy if exists "Profil dapat dibaca oleh pengguna terautentikasi" on public.profiles;
 create policy "Profil dapat dibaca oleh pengguna terautentikasi"
   on public.profiles for select
   using (auth.role() = 'authenticated');
 
 -- Policy: Pengguna hanya dapat mengubah profil miliknya sendiri
+drop policy if exists "Pengguna dapat mengupdate profil sendiri" on public.profiles;
 create policy "Pengguna dapat mengupdate profil sendiri"
   on public.profiles for update
   using (auth.uid() = id);
 
+drop policy if exists "Pengguna dapat menyisipkan profil sendiri" on public.profiles;
 create policy "Pengguna dapat menyisipkan profil sendiri"
   on public.profiles for insert
   with check (auth.uid() = id);
@@ -79,15 +83,18 @@ create table if not exists public.tickets (
 alter table public.tickets enable row level security;
 
 -- Policy: Pengguna hanya dapat membaca tiket miliknya sendiri
+drop policy if exists "Pengguna hanya melihat tiket miliknya" on public.tickets;
 create policy "Pengguna hanya melihat tiket miliknya"
   on public.tickets for select
   using (auth.uid() = user_id);
 
 -- Policy: Pengguna dapat menyimpan tiket baru miliknya
+drop policy if exists "Pengguna dapat menyimpan tiket baru" on public.tickets;
 create policy "Pengguna dapat menyimpan tiket baru"
   on public.tickets for insert
   with check (auth.uid() = user_id);
 
+drop policy if exists "Pengguna dapat mengupdate tiket miliknya" on public.tickets;
 create policy "Pengguna dapat mengupdate tiket miliknya"
   on public.tickets for update
   using (auth.uid() = user_id);
@@ -106,23 +113,25 @@ create table if not exists public.payment_methods (
 alter table public.payment_methods enable row level security;
 
 -- Policy: Pengguna hanya dapat membaca metode pembayaran miliknya
+drop policy if exists "Pengguna hanya melihat metode pembayaran miliknya" on public.payment_methods;
 create policy "Pengguna hanya melihat metode pembayaran miliknya"
   on public.payment_methods for select
   using (auth.uid() = user_id);
 
 -- Policy: Pengguna dapat menyimpan metode pembayaran miliknya
+drop policy if exists "Pengguna dapat menyimpan metode pembayaran" on public.payment_methods;
 create policy "Pengguna dapat menyimpan metode pembayaran"
   on public.payment_methods for insert
   with check (auth.uid() = user_id);
 
 -- Policy: Pengguna dapat mengupdate metode pembayaran miliknya
+drop policy if exists "Pengguna dapat mengupdate metode pembayaran miliknya" on public.payment_methods;
 create policy "Pengguna dapat mengupdate metode pembayaran miliknya"
   on public.payment_methods for update
   using (auth.uid() = user_id);
 
 -- Policy: Pengguna dapat menghapus metode pembayaran miliknya
+drop policy if exists "Pengguna dapat menghapus metode pembayaran miliknya" on public.payment_methods;
 create policy "Pengguna dapat menghapus metode pembayaran miliknya"
   on public.payment_methods for delete
   using (auth.uid() = user_id);
-
-
