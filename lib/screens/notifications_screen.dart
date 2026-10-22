@@ -50,26 +50,6 @@ class NotificationsScreen extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
-              GlassBox(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                radius: 16,
-                child: Column(children: [
-                  Row(children: [
-                    const Expanded(child: Text('Info pembelian')),
-                    Switch(
-                        value: s.notifPurchase,
-                        onChanged: (v) => s.setNotifPrefs(purchase: v)),
-                  ]),
-                  const Divider(color: Colors.white24, height: 1),
-                  Row(children: [
-                    const Expanded(child: Text('Promo & voucher')),
-                    Switch(
-                        value: s.notifPromo,
-                        onChanged: (v) => s.setNotifPrefs(promo: v)),
-                  ]),
-                ]),
-              ),
-              const SizedBox(height: 18),
               Text(
                   s.unread == 0
                       ? 'Semua sudah dibaca'
