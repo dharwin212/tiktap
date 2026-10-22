@@ -77,67 +77,84 @@ class _SeatScreenState extends State<SeatScreen> {
   void _showMovieInfo(Movie m) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFF0D1824),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  PosterCard(movie: m, w: 70, h: 100),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(m.title,
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 6),
-                        Text('Genre: ${m.genre}',
-                            style: const TextStyle(color: Colors.white70)),
-                        Text('Durasi: ${m.minutes ~/ 60}j ${m.minutes % 60}m',
-                            style: const TextStyle(color: Colors.white70)),
-                        Text('Rating: ⭐ ${m.rating > 0 ? m.rating.toStringAsFixed(1) : "8.0"} / 10',
-                            style: const TextStyle(color: AppColors.yellow, fontWeight: FontWeight.w600)),
-                        Text('Harga: ${rupiah(m.price)} / kursi',
-                            style: const TextStyle(
-                                color: AppColors.lightBlue,
-                                fontWeight: FontWeight.w600)),
-                      ],
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    PosterCard(movie: m, w: 70, h: 100),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(m.title,
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.w700)),
+                          const SizedBox(height: 6),
+                          Text('Genre: ${m.genre}',
+                              style: const TextStyle(color: Colors.white70)),
+                          Text('Durasi: ${m.minutes ~/ 60}j ${m.minutes % 60}m',
+                              style: const TextStyle(color: Colors.white70)),
+                          Text('Rating: ⭐ ${m.rating > 0 ? m.rating.toStringAsFixed(1) : "8.0"} / 10',
+                              style: const TextStyle(color: AppColors.yellow, fontWeight: FontWeight.w600)),
+                          Text('Harga: ${rupiah(m.price)} / kursi',
+                              style: const TextStyle(
+                                  color: AppColors.lightBlue,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (m.description.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Sinopsis',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    m.description,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                  ),
                 ],
-              ),
-              if (m.description.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 const Text(
-                  'Sinopsis',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  'Silakan pilih tanggal tayang, jam penayangan, dan nomor kursi yang kamu inginkan, lalu tekan "Lanjut" untuk melakukan pembayaran.',
+                  style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  m.description,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                const SizedBox(height: 16),
+                GradientButton(
+                  text: 'Tutup',
+                  onTap: () => Navigator.of(ctx).pop(),
                 ),
               ],
-              const SizedBox(height: 14),
-              const Text(
-                'Silakan pilih tanggal tayang, jam penayangan, dan nomor kursi yang kamu inginkan, lalu tekan "Lanjut" untuk melakukan pembayaran.',
-                style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
-              ),
-              const SizedBox(height: 16),
-              GradientButton(
-                text: 'Tutup',
-                onTap: () => Navigator.of(ctx).pop(),
-              ),
-            ],
+            ),
           ),
         ),
       ),

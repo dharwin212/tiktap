@@ -44,32 +44,62 @@ class _OrderScreenState extends State<OrderScreen> {
   Future<void> _choosePayment() async {
     final r = await showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFF0D1824),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Pay with',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
           ),
-          for (final m in AppState.I.payments)
-            ListTile(
-              title: Text(m.type),
-              subtitle: Text(m.masked,
-                  style: const TextStyle(color: Colors.white60)),
-              trailing: m.id == _sel?.id
-                  ? const Icon(Icons.check, color: AppColors.lightBlue)
-                  : null,
-              onTap: () => Navigator.of(ctx).pop(m.id),
-            ),
-          ListTile(
-            leading: const Icon(Icons.add_circle_outline, color: AppColors.lightBlue),
-            title: const Text('Kelola metode pembayaran'),
-            onTap: () => Navigator.of(ctx).pop('_manage'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Text('Pay with',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (final m in AppState.I.payments)
+                      ListTile(
+                        leading:
+                            Icon(paymentIconFor(m.type), color: AppColors.lightBlue),
+                        title: Text(m.type),
+                        subtitle: Text(m.masked,
+                            style: const TextStyle(color: Colors.white60)),
+                        trailing: m.id == _sel?.id
+                            ? const Icon(Icons.check, color: AppColors.lightBlue)
+                            : null,
+                        onTap: () => Navigator.of(ctx).pop(m.id),
+                      ),
+                    ListTile(
+                      leading: const Icon(Icons.add_circle_outline,
+                          color: AppColors.lightBlue),
+                      title: const Text('Kelola metode pembayaran'),
+                      onTap: () => Navigator.of(ctx).pop('_manage'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ]),
+        ),
       ),
     );
     if (r == null || !mounted) return;
@@ -85,27 +115,56 @@ class _OrderScreenState extends State<OrderScreen> {
   Future<void> _chooseVoucher() async {
     final r = await showModalBottomSheet<int>(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFF0D1824),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('Use Voucher',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
           ),
-          for (var i = 0; i < _vouchers.length; i++)
-            ListTile(
-              title: Text(_vouchers[i].name),
-              subtitle: Text('Promo: ${rupiah(_vouchers[i].amount)}',
-                  style: const TextStyle(color: Colors.white60)),
-              trailing: i == _v
-                  ? const Icon(Icons.check, color: AppColors.lightBlue)
-                  : null,
-              onTap: () => Navigator.of(ctx).pop(i),
-            ),
-        ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Text('Use Voucher',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+              ),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    for (var i = 0; i < _vouchers.length; i++)
+                      ListTile(
+                        leading: const Icon(Icons.local_offer_outlined,
+                            color: AppColors.yellow),
+                        title: Text(_vouchers[i].name),
+                        subtitle: Text('Promo: ${rupiah(_vouchers[i].amount)}',
+                            style: const TextStyle(color: Colors.white60)),
+                        trailing: i == _v
+                            ? const Icon(Icons.check, color: AppColors.lightBlue)
+                            : null,
+                        onTap: () => Navigator.of(ctx).pop(i),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
     if (r != null) setState(() => _v = r);

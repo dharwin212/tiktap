@@ -229,6 +229,17 @@ const topMovies = [
   ),
 ];
 
+IconData paymentIconFor(String t) {
+  final l = t.toLowerCase();
+  if (l.contains('transfer') || l.contains('bank') || l.contains('bca')) {
+    return Icons.account_balance_outlined;
+  }
+  if (l.contains('kartu') || l.contains('kredit') || l.contains('card')) {
+    return Icons.credit_card;
+  }
+  return Icons.account_balance_wallet_outlined;
+}
+
 class PaymentMethod {
   final String id;
   final String type; // GOPAY, OVO, DANA, ShopeePay, Transfer Bank, Kartu Kredit
