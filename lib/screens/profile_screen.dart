@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../auth_service.dart';
-import '../midtrans_config.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -103,11 +102,6 @@ class ProfileScreen extends StatelessWidget {
                     ? 'Belum ada metode'
                     : 'Utama: ${pm.label}  (${s.payments.length} tersimpan)',
                 onTap: () => _open(context, const PaymentMethodsScreen())),
-            _item(Icons.account_balance_wallet_outlined, 'Midtrans Snap Gateway',
-                sub: MidtransConfig.isConfigured
-                    ? 'Server Key aktif (Sandbox/Live)'
-                    : 'Mode Simulator (Klik untuk atur Key)',
-                onTap: () => MidtransConfig.showSettingsDialog(context)),
             _item(Icons.notifications_none, 'Notifikasi',
                 badge: s.unread,
                 onTap: () => _open(context, const NotificationsScreen())),

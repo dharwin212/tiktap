@@ -183,38 +183,14 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
           ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Pembayaran TikTap',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-              Row(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 2),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppColors.yellow.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                          color: AppColors.yellow.withValues(alpha: 0.8)),
-                    ),
-                    child: Text(
-                      isSim ? 'SANDBOX SIMULATOR' : 'MIDTRANS SNAP LIVE',
-                      style: const TextStyle(
-                        color: AppColors.yellow,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Order ID: ${widget.orderId.substring(0, widget.orderId.length.clamp(0, 10))}',
-                    style:
-                        const TextStyle(color: Colors.white54, fontSize: 11),
-                  ),
-                ],
+              Text(
+                'Order ID: ${widget.orderId}',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white54, fontSize: 11),
               ),
             ],
           ),
@@ -229,12 +205,6 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                   mode: LaunchMode.externalApplication,
                 ),
               ),
-            IconButton(
-              icon: const Icon(Icons.settings_outlined,
-                  color: AppColors.lightBlue, size: 22),
-              tooltip: 'Pengaturan Kunci Midtrans',
-              onPressed: () => MidtransConfig.showSettingsDialog(context),
-            ),
           ],
           bottom: _progress < 100 && !isSim
               ? PreferredSize(
@@ -254,62 +224,11 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
   }
 
   Widget _buildWebViewUI() {
-    return Stack(
-      children: [
-        if (_webController != null)
-          WebViewWidget(controller: _webController!),
-        // Floating action bar di bawah untuk memudahkan simulasi saat Sandbox
-        Positioned(
-          left: 16,
-          right: 16,
-          bottom: 16,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0D1824).withValues(alpha: 0.95),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.info_outline,
-                    color: AppColors.lightBlue, size: 20),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Text(
-                    'Mode Sandbox: Pilih metode bayar di webview atau klik tombol simulasi.',
-                    style: TextStyle(color: Colors.white70, fontSize: 11),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.lightBlue,
-                    foregroundColor: const Color(0xFF0D1824),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                  onPressed: () =>
-                      _finishPayment(PaymentStatus.success, 'Midtrans Sandbox (QRIS)'),
-                  child: const Text(
-                    'Simulasi Sukses',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    if (_webController != null) {
+      return WebViewWidget(controller: _webController!);
+    }
+    return const Center(
+      child: CircularProgressIndicator(color: AppColors.lightBlue),
     );
   }
 
