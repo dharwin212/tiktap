@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
@@ -52,6 +53,18 @@ class Order {
   });
 }
 
+/// Membersihkan teks label pembayaran agar tidak memuat kata "Sandbox".
+String cleanPaymentMethodName(String payment) {
+  var s = payment
+      .replaceAll(RegExp(r'\bSandbox\b', caseSensitive: false), '')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim();
+  if (s.startsWith('(') && s.endsWith(')')) {
+    s = s.substring(1, s.length - 1).trim();
+  }
+  return s;
+}
+
 /// Tiket yang sudah dibayar.
 class Ticket {
   final String id;
@@ -76,6 +89,9 @@ class Ticket {
     required this.showAt,
   });
 
+  /// Mengembalikan label pembayaran tanpa embel-embel "Sandbox"
+  String get cleanPayment => cleanPaymentMethodName(payment);
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'movie': movie.title,
@@ -84,7 +100,7 @@ class Ticket {
         'time': time,
         'seats': seats,
         'total': total,
-        'payment': payment,
+        'payment': cleanPayment,
         'showAt': showAt.toIso8601String(),
       };
 
@@ -98,7 +114,7 @@ class Ticket {
       time: j['time'],
       seats: List<String>.from(j['seats']),
       total: j['total'],
-      payment: j['payment'] ?? '',
+      payment: cleanPaymentMethodName(j['payment'] ?? ''),
       showAt: DateTime.parse(j['showAt']),
     );
   }
@@ -542,4 +558,61 @@ class AppState extends ChangeNotifier {
   }
 
   List<Ticket> get active => tickets.where((t) => !t.isPast).toList();
+
+  /// Mengambil daftar kursi yang sudah terisi untuk jadwal film tertentu.
+  /// - Tiap hari dan jam tayang memiliki layout kursi terisi awal yang bervariasi (reset per slot).
+  /// - Semua kursi dari tiket yang SUDAH dibeli untuk film, tanggal, dan jam ini
+  ///   otomatis ditandai sebagai terisi (tidak bisa dipesan dobel).
+  Set<String> getTakenSeats({
+    required String movieTitle,
+    required int dayOffset,
+    required String dateStr,
+    required String timeStr,
+    required DateTime showAt,
+  }) {
+    final taken = <String>{};
+
+    // Pool kursi yang disimulasikan sebagai terisi awal oleh penonton lain.
+    // Kursi baris depan/tengah populer seperti A1, A2, B1, C1 sengaja tidak dimasukkan ke pool awal
+    // agar selalu dapat dipilih pengguna baru, KECUALI jika pengguna sudah membelinya!
+    const pool = [
+      'A3', 'A4', 'A5', 'A6',
+      'B2', 'B3', 'B4', 'B5',
+      'C2', 'C3', 'C5', 'C6',
+      'D1', 'D2', 'D4', 'D5',
+      'E2', 'E3', 'E4', 'E5',
+    ];
+
+    // Seed deterministik berbasis kombinasi film, offset hari (0: Hari ini, 1: Besok, 2: Lusa), dan jam tayang
+    final seed = (movieTitle.hashCode * 37 + dayOffset * 19 + timeStr.hashCode).abs();
+    final rng = Random(seed);
+
+    // Variasi jumlah kursi terisi bawaan: Hari ini 4-6, Besok 2-4, Lusa 1-3
+    final baseCount = dayOffset == 0
+        ? 4 + rng.nextInt(3)
+        : dayOffset == 1
+            ? 2 + rng.nextInt(3)
+            : 1 + rng.nextInt(3);
+
+    final shuffled = List<String>.of(pool)..shuffle(rng);
+    taken.addAll(shuffled.take(baseCount));
+
+    // Tambahkan SEMUA kursi dari tiket yang SUDAH dibeli untuk jadwal ini (film, tanggal & jam sama)
+    for (final t in tickets) {
+      final isSameMovie =
+          t.movie.title.trim().toLowerCase() == movieTitle.trim().toLowerCase();
+      final isSameTime = t.time.trim() == timeStr.trim();
+      final isSameDate =
+          t.date.trim().toLowerCase() == dateStr.trim().toLowerCase() ||
+              (t.showAt.year == showAt.year &&
+                  t.showAt.month == showAt.month &&
+                  t.showAt.day == showAt.day);
+
+      if (isSameMovie && isSameTime && isSameDate) {
+        taken.addAll(t.seats);
+      }
+    }
+
+    return taken;
+  }
 }

@@ -15,10 +15,19 @@ class _SeatScreenState extends State<SeatScreen> {
   static const _times = ['13:00', '15:30', '18:00', '19:30', '21:15'];
   static const _dates = ['Hari ini', 'Besok', 'Lusa'];
   static const _rows = ['A', 'B', 'C', 'D', 'E'];
-  static const _taken = {'A3', 'A4', 'B2', 'C5', 'C6', 'D1', 'E4'};
 
   int _time = 0;
   int _date = 0;
+
+  Set<String> get _taken {
+    return AppState.I.getTakenSeats(
+      movieTitle: widget.movie.title,
+      dayOffset: _date,
+      dateStr: _dateLabel(),
+      timeStr: _times[_time],
+      showAt: _showAt(_date, _time),
+    );
+  }
 
   DateTime _showAt(int d, int t) {
     final now = DateTime.now();
@@ -179,12 +188,22 @@ class _SeatScreenState extends State<SeatScreen> {
         ),
       );
 
-  Widget _seat(String id) {
-    final taken = _taken.contains(id);
+  Widget _seat(String id, Set<String> takenSeats) {
+    final taken = takenSeats.contains(id);
     final on = _seats.contains(id);
     return GestureDetector(
       onTap: taken
-          ? null
+          ? () {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                      'Kursi $id sudah terisi untuk jadwal ini. Silakan pilih kursi lain.'),
+                  duration: const Duration(seconds: 1),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
           : () => setState(() => on ? _seats.remove(id) : _seats.add(id)),
       child: Container(
         width: 32,
@@ -214,194 +233,210 @@ class _SeatScreenState extends State<SeatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final m = widget.movie;
-    final total = _seats.length * m.price;
-    final sorted = _seats.toList()..sort();
-    return Scaffold(
-      body: GradientBg(
-        blue: true,
-        child: SafeArea(
-          child: Column(children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-              child: Row(children: [
-                RoundIconButton(
-                    icon: Icons.arrow_back,
-                    onTap: () => Navigator.of(context).pop()),
-                const Expanded(
-                  child: Center(
-                    child: Text('Pilih Kursi',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+    return ListenableBuilder(
+      listenable: AppState.I,
+      builder: (context, _) {
+        final m = widget.movie;
+        final takenSeats = _taken;
+        // Bersihkan pilihan kursi jika ada yang sudah terisi di jadwal ini
+        _seats.removeWhere((s) => takenSeats.contains(s));
+        final total = _seats.length * m.price;
+        final sorted = _seats.toList()..sort();
+        return Scaffold(
+          body: GradientBg(
+            blue: true,
+            child: SafeArea(
+              child: Column(children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  child: Row(children: [
+                    RoundIconButton(
+                        icon: Icons.arrow_back,
+                        onTap: () => Navigator.of(context).pop()),
+                    const Expanded(
+                      child: Center(
+                        child: Text('Pilih Kursi',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                    const SizedBox(width: 44),
+                  ]),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                    children: [
+                      Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        PosterCard(
+                          movie: m,
+                          w: 80,
+                          h: 116,
+                          onTap: () => _showMovieInfo(m),
+                        ),
+                        Expanded(
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(m.title,
+                                    style: const TextStyle(
+                                        fontSize: 18, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 6),
+                                Text('${m.genre}  |  ${m.minutes ~/ 60}j ${m.minutes % 60}m',
+                                    style: const TextStyle(
+                                        color: Colors.white70, fontSize: 13)),
+                                const SizedBox(height: 6),
+                                Text('${rupiah(m.price)} / kursi',
+                                    style: const TextStyle(color: AppColors.lightBlue)),
+                              ]),
+                        ),
+                      ]),
+                      const SizedBox(height: 20),
+                      const Text('Tanggal',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 10),
+                      Row(children: [
+                        for (var i = 0; i < _dates.length; i++)
+                          _chip(_dates[i], _date == i, () {
+                            final t = _firstValid(i);
+                            if (t == -1) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Semua jam tayang untuk hari ini sudah lewat. Silakan pilih hari Besok atau Lusa.'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+                            if (_date != i) {
+                              setState(() {
+                                _date = i;
+                                _seats.clear(); // Reset pilihan kursi saat ganti hari
+                                if (_past(_date, _time)) _time = t;
+                              });
+                            }
+                          }),
+                      ]),
+                      const SizedBox(height: 16),
+                      const Text('Jam tayang',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 10),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(children: [
+                          for (var i = 0; i < _times.length; i++)
+                            Opacity(
+                              opacity: _past(_date, i) ? 0.35 : 1,
+                              child: _chip(_times[i], _time == i, () {
+                                if (!_past(_date, i) && _time != i) {
+                                  setState(() {
+                                    _time = i;
+                                    _seats.clear(); // Reset pilihan kursi saat ganti jam tayang
+                                  });
+                                }
+                              }),
+                            ),
+                        ]),
+                      ),
+                      const SizedBox(height: 22),
+                      Container(
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 30),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(6),
+                          gradient: const LinearGradient(colors: [
+                            Colors.transparent,
+                            AppColors.lightBlue,
+                            Colors.transparent
+                          ]),
+                        ),
+                      ),
+                      const Center(
+                          child: Padding(
+                        padding: EdgeInsets.only(top: 6, bottom: 14),
+                        child: Text('Layar',
+                            style: TextStyle(color: Colors.white54, fontSize: 12)),
+                      )),
+                      Center(
+                        child: Column(children: [
+                          for (final r in _rows)
+                            Row(mainAxisSize: MainAxisSize.min, children: [
+                              for (var c = 1; c <= 6; c++) ...[
+                                _seat('$r$c', takenSeats),
+                                if (c == 3) const SizedBox(width: 14),
+                              ],
+                            ]),
+                        ]),
+                      ),
+                      const SizedBox(height: 10),
+                      const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        _Legend(color: Color(0x38FFFFFF), text: 'Tersedia'),
+                        _Legend(color: AppColors.yellow, text: 'Dipilih'),
+                        _Legend(color: Colors.white12, text: 'Terisi'),
+                      ]),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 44),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                  child: GlassBox(
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text(_seats.isEmpty ? 'Pilih kursi' : sorted.join(', '),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 13)),
+                              const SizedBox(height: 2),
+                              Text(rupiah(total),
+                                  style: const TextStyle(
+                                      fontSize: 20, fontWeight: FontWeight.w700)),
+                            ]),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 130,
+                            child: Opacity(
+                              opacity: _seats.isEmpty ? 0.4 : 1,
+                              child: GradientButton(
+                                text: 'Lanjut',
+                                onTap: () {
+                                  if (_seats.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Silakan pilih minimal 1 kursi terlebih dahulu untuk melanjutkan ke pembayaran.'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  if (_past(_date, _time)) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Jam tayang yang dipilih sudah lewat. Silakan pilih jam lain.'),
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  _next();
+                                },
+                              ),
+                            ),
+                          ),
+                        ]),
+                  ),
+                ),
               ]),
             ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-                children: [
-                  Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    PosterCard(
-                      movie: m,
-                      w: 80,
-                      h: 116,
-                      onTap: () => _showMovieInfo(m),
-                    ),
-                    Expanded(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(m.title,
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 6),
-                            Text('${m.genre}  |  ${m.minutes ~/ 60}j ${m.minutes % 60}m',
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 13)),
-                            const SizedBox(height: 6),
-                            Text('${rupiah(m.price)} / kursi',
-                                style: const TextStyle(color: AppColors.lightBlue)),
-                          ]),
-                    ),
-                  ]),
-                  const SizedBox(height: 20),
-                  const Text('Tanggal',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 10),
-                  Row(children: [
-                    for (var i = 0; i < _dates.length; i++)
-                      _chip(_dates[i], _date == i, () {
-                        final t = _firstValid(i);
-                        if (t == -1) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Semua jam tayang untuk hari ini sudah lewat. Silakan pilih hari Besok atau Lusa.'),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                          return;
-                        }
-                        setState(() {
-                          _date = i;
-                          if (_past(_date, _time)) _time = t;
-                        });
-                      }),
-                  ]),
-                  const SizedBox(height: 16),
-                  const Text('Jam tayang',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 10),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(children: [
-                      for (var i = 0; i < _times.length; i++)
-                        Opacity(
-                          opacity: _past(_date, i) ? 0.35 : 1,
-                          child: _chip(_times[i], _time == i, () {
-                            if (!_past(_date, i)) setState(() => _time = i);
-                          }),
-                        ),
-                    ]),
-                  ),
-                  const SizedBox(height: 22),
-                  Container(
-                    height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 30),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(6),
-                      gradient: const LinearGradient(colors: [
-                        Colors.transparent,
-                        AppColors.lightBlue,
-                        Colors.transparent
-                      ]),
-                    ),
-                  ),
-                  const Center(
-                      child: Padding(
-                    padding: EdgeInsets.only(top: 6, bottom: 14),
-                    child: Text('Layar',
-                        style: TextStyle(color: Colors.white54, fontSize: 12)),
-                  )),
-                  Center(
-                    child: Column(children: [
-                      for (final r in _rows)
-                        Row(mainAxisSize: MainAxisSize.min, children: [
-                          for (var c = 1; c <= 6; c++) ...[
-                            _seat('$r$c'),
-                            if (c == 3) const SizedBox(width: 14),
-                          ],
-                        ]),
-                    ]),
-                  ),
-                  const SizedBox(height: 10),
-                  const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    _Legend(color: Color(0x38FFFFFF), text: 'Tersedia'),
-                    _Legend(color: AppColors.yellow, text: 'Dipilih'),
-                    _Legend(color: Colors.white12, text: 'Terisi'),
-                  ]),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-              child: GlassBox(
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(_seats.isEmpty ? 'Pilih kursi' : sorted.join(', '),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  color: Colors.white70, fontSize: 13)),
-                          const SizedBox(height: 2),
-                          Text(rupiah(total),
-                              style: const TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.w700)),
-                        ]),
-                      ),
-                      const SizedBox(width: 12),
-                      SizedBox(
-                        width: 130,
-                        child: Opacity(
-                          opacity: _seats.isEmpty ? 0.4 : 1,
-                          child: GradientButton(
-                            text: 'Lanjut',
-                            onTap: () {
-                              if (_seats.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Silakan pilih minimal 1 kursi terlebih dahulu untuk melanjutkan ke pembayaran.'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                                return;
-                              }
-                              if (_past(_date, _time)) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Jam tayang yang dipilih sudah lewat. Silakan pilih jam lain.'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                                return;
-                              }
-                              _next();
-                            },
-                          ),
-                        ),
-                      ),
-                    ]),
-              ),
-            ),
-          ]),
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

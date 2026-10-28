@@ -260,7 +260,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Midtrans Snap Simulator (Sandbox Ready)',
+                        'Midtrans Snap Simulator',
                         style: TextStyle(
                             color: AppColors.yellow,
                             fontWeight: FontWeight.w700,
@@ -473,8 +473,8 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
             text: 'Simulasikan Pembayaran Berhasil',
             onTap: () {
               final methods = ['QRIS', 'BCA Virtual Account', 'GoPay'];
-              _finishPayment(
-                  PaymentStatus.success, 'Midtrans ${methods[_simMethodIndex]}');
+              _finishPayment(PaymentStatus.success,
+                  'Midtrans (${methods[_simMethodIndex]})');
             },
           ),
           const SizedBox(height: 12),

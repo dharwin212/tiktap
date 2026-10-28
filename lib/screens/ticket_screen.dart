@@ -343,7 +343,7 @@ class _TicketCard extends StatelessWidget {
                         Row(children: [
                           _info('Row', seatRows(t.seats), flex: 1),
                           _info('Seats', seatNumbers(t.seats), flex: 2),
-                          _info('Payment', t.payment.isNotEmpty ? t.payment : 'GOPAY', flex: 2),
+                          _info('Payment', t.cleanPayment.isNotEmpty ? t.cleanPayment : 'GOPAY', flex: 2),
                         ]),
                         const SizedBox(height: 7),
                         SizedBox(

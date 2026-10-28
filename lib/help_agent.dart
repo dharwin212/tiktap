@@ -97,7 +97,7 @@ Kalau masalah tidak bisa diselesaikan dari fakta di atas, arahkan pengguna mengh
     final s = AppState.I;
     final last = s.tickets.isEmpty ? null : s.tickets.first;
     return 'Nama: ${s.username}. Jumlah tiket dibeli: ${s.tickets.length}. '
-        '${last == null ? 'Belum ada pembelian.' : 'Tiket terakhir: ${last.movie.title}, ${last.date} ${last.time}, kode ${last.id}, bayar ${last.payment}.'} '
+        '${last == null ? 'Belum ada pembelian.' : 'Tiket terakhir: ${last.movie.title}, ${last.date} ${last.time}, kode ${last.id}, bayar ${last.cleanPayment}.'} '
         'Metode pembayaran tersimpan: ${s.payments.isEmpty ? 'belum ada' : s.payments.map((m) => m.type).join(', ')}.';
   }
 }

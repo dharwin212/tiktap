@@ -310,7 +310,7 @@ class _OrderScreenState extends State<OrderScreen> {
                 ),
                 const SizedBox(height: 14),
                 const Text(
-                  'Kamu tetap dapat melanjutkan pemesanan dengan membuka Simulator Sandbox.',
+                  'Kamu tetap dapat melanjutkan pemesanan dengan membuka Simulator Pembayaran.',
                   style: TextStyle(color: AppColors.lightBlue, fontSize: 12),
                 ),
               ],
@@ -330,7 +330,7 @@ class _OrderScreenState extends State<OrderScreen> {
                   foregroundColor: const Color(0xFF0D1824),
                 ),
                 onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Buka Simulator Sandbox'),
+                child: const Text('Buka Simulator Pembayaran'),
               ),
             ],
           ),
@@ -398,6 +398,7 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 
   void _onSuccess(String id, Order o, int total, String method) {
+    final cleanMethod = cleanPaymentMethodName(method);
     final t = Ticket(
       id: id,
       movie: o.movie,
@@ -406,14 +407,14 @@ class _OrderScreenState extends State<OrderScreen> {
       time: o.time,
       seats: o.seats,
       total: total,
-      payment: method,
+      payment: cleanMethod,
       showAt: o.showAt,
     );
     setState(() => _v = 0);
     AppState.I.addTicket(t); // -> otomatis pindah ke tab Mobile Ticket
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Pembayaran berhasil ($method), tiket siap dipakai!'),
+        content: Text('Pembayaran berhasil ($cleanMethod), tiket siap dipakai!'),
         backgroundColor: const Color(0xFF0B6BA8),
       ),
     );

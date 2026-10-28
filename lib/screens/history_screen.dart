@@ -72,7 +72,7 @@ class HistoryScreen extends StatelessWidget {
                                           color: Colors.white70, fontSize: 12)),
                                   Text(
                                       'Row ${seatRows(t.seats)}, Seats ${seatNumbers(t.seats)}'
-                                      '${t.payment.isEmpty ? '' : '  |  ${t.payment}'}',
+                                      '${t.cleanPayment.isEmpty ? '' : '  |  ${t.cleanPayment}'}',
                                       style: const TextStyle(
                                           color: Colors.white70, fontSize: 12)),
                                   const SizedBox(height: 6),
