@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../midtrans_config.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -6,7 +7,10 @@ import '../widgets.dart';
 const _types = ['GOPAY', 'OVO', 'DANA', 'ShopeePay', 'Transfer Bank', 'Kartu Kredit'];
 
 IconData _iconFor(String t) {
-  if (t == 'Transfer Bank') return Icons.account_balance_outlined;
+  if (t.contains('Midtrans') || t.contains('Snap') || t.contains('QRIS')) {
+    return Icons.qr_code_scanner_rounded;
+  }
+  if (t == 'Transfer Bank' || t.contains('BCA')) return Icons.account_balance_outlined;
   if (t == 'Kartu Kredit') return Icons.credit_card;
   return Icons.account_balance_wallet_outlined;
 }
@@ -104,6 +108,10 @@ class PaymentMethodsScreen extends StatelessWidget {
   }
 
   void _edit(BuildContext context, PaymentMethod m) {
+    if (m.id == 'pm_midtrans' || m.type.contains('Midtrans')) {
+      MidtransConfig.showSettingsDialog(context);
+      return;
+    }
     final c = TextEditingController(text: m.number);
     String? err;
     showModalBottomSheet(

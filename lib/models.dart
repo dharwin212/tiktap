@@ -231,6 +231,9 @@ const topMovies = [
 
 IconData paymentIconFor(String t) {
   final l = t.toLowerCase();
+  if (l.contains('midtrans') || l.contains('snap') || l.contains('qris')) {
+    return Icons.qr_code_scanner_rounded;
+  }
   if (l.contains('transfer') || l.contains('bank') || l.contains('bca')) {
     return Icons.account_balance_outlined;
   }
@@ -242,11 +245,14 @@ IconData paymentIconFor(String t) {
 
 class PaymentMethod {
   final String id;
-  final String type; // GOPAY, OVO, DANA, ShopeePay, Transfer Bank, Kartu Kredit
+  final String type; // GOPAY, OVO, DANA, ShopeePay, Transfer Bank, Kartu Kredit, Midtrans Snap
   final String number;
   const PaymentMethod({required this.id, required this.type, required this.number});
 
   String get masked {
+    if (number.toLowerCase() == 'otomatis' || number.isEmpty) {
+      return 'Instan (QRIS / VA / E-Wallet)';
+    }
     final d = number.replaceAll(RegExp(r'\D'), '');
     return d.length <= 4 ? d : '•••• ${d.substring(d.length - 4)}';
   }
@@ -274,10 +280,15 @@ class PaymentMethod {
 }
 
 List<PaymentMethod> defaultPaymentMethods() => const [
+      PaymentMethod(
+          id: 'pm_midtrans',
+          type: 'Midtrans Snap (QRIS / VA / E-Wallet)',
+          number: 'Otomatis'),
       PaymentMethod(id: 'pm_gopay', type: 'GOPAY', number: '081234567890'),
       PaymentMethod(id: 'pm_dana', type: 'DANA', number: '081234567890'),
       PaymentMethod(id: 'pm_ovo', type: 'OVO', number: '081234567890'),
-      PaymentMethod(id: 'pm_bca', type: 'Transfer Bank (BCA)', number: '1234567890'),
+      PaymentMethod(
+          id: 'pm_bca', type: 'Transfer Bank (BCA)', number: '1234567890'),
     ];
 
 class AppNotification {

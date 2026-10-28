@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../midtrans_service.dart';
 import '../models.dart';
 import '../nav_menu.dart';
 import '../theme.dart';
 import 'home_screen.dart';
+import 'midtrans_snap_screen.dart';
 import 'payment_methods_screen.dart';
 import 'seat_screen.dart';
 
@@ -80,7 +82,27 @@ class _OrderScreenState extends State<OrderScreen> {
                       ListTile(
                         leading:
                             Icon(paymentIconFor(m.type), color: AppColors.lightBlue),
-                        title: Text(m.type),
+                        title: Row(
+                          children: [
+                            Flexible(child: Text(m.type, overflow: TextOverflow.ellipsis)),
+                            if (m.id == 'pm_midtrans' || m.type.contains('Midtrans')) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.lightBlue.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppColors.lightBlue),
+                                ),
+                                child: const Text('AUTO',
+                                    style: TextStyle(
+                                        color: AppColors.lightBlue,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700)),
+                              ),
+                            ],
+                          ],
+                        ),
                         subtitle: Text(m.masked,
                             style: const TextStyle(color: Colors.white60)),
                         trailing: m.id == _sel?.id
@@ -212,7 +234,7 @@ class _OrderScreenState extends State<OrderScreen> {
         ]),
       );
 
-  void _confirm(Order o, int total) {
+  Future<void> _confirm(Order o, int total) async {
     final pm = _sel;
     if (pm == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -220,6 +242,110 @@ class _OrderScreenState extends State<OrderScreen> {
       return;
     }
     final id = 'TT${DateTime.now().millisecondsSinceEpoch % 100000000}';
+
+    // Jika metode yang dipilih adalah Midtrans Snap (atau default)
+    if (pm.id == 'pm_midtrans' || pm.type.contains('Midtrans')) {
+      // 1. Tampilkan dialog loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(
+          child: Card(
+            color: Color(0xFF0D1824),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16))),
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(color: AppColors.lightBlue),
+                  SizedBox(height: 16),
+                  Text('Menghubungkan ke Midtrans Snap...',
+                      style: TextStyle(color: Colors.white, fontSize: 14)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final snapRes = await MidtransService.createTransaction(
+        orderId: id,
+        grossAmount: total,
+        movieTitle: o.movie.title,
+        seatCount: o.seats.length,
+        customerName: AppState.I.username,
+        customerEmail: AppState.I.email,
+        customerPhone: AppState.I.phone,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // Tutup loading
+
+      if (!snapRes.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                snapRes.errorMessage ?? 'Gagal membuat transaksi Midtrans'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
+
+      // 2. Buka WebView Pop-up Midtrans Snap
+      final res = await Navigator.of(context).push<PaymentResult>(
+        MaterialPageRoute(
+          builder: (_) => MidtransSnapScreen(
+            orderId: id,
+            totalAmount: total,
+            movieTitle: o.movie.title,
+            seats: o.seats,
+            snapResult: snapRes,
+          ),
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (res != null && res.status == PaymentStatus.success) {
+        final t = Ticket(
+          id: id,
+          movie: o.movie,
+          cinema: o.cinema,
+          date: o.date,
+          time: o.time,
+          seats: o.seats,
+          total: total,
+          payment: res.method,
+          showAt: o.showAt,
+        );
+        setState(() => _v = 0);
+        AppState.I.addTicket(t); // -> otomatis pindah ke tab Mobile Ticket
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('Pembayaran berhasil (${res.method}), tiket siap dipakai!'),
+            backgroundColor: const Color(0xFF0B6BA8),
+          ),
+        );
+      } else if (res?.status == PaymentStatus.pending) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Menunggu pembayaran diselesaikan. Periksa instruksi pembayaran.'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Pembayaran dibatalkan')),
+        );
+      }
+      return;
+    }
+
+    // Alur pembayaran langsung / simulasi untuk metode tersimpan lainnya
     final t = Ticket(
       id: id,
       movie: o.movie,

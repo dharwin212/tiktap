@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'auth_service.dart';
+import 'midtrans_config.dart';
 import 'theme.dart';
 import 'screens/splash_screen.dart';
 
@@ -19,6 +20,7 @@ Future<void> main() async {
     ),
   );
   await AuthService.init();
+  await MidtransConfig.load();
   runApp(const TikTapApp());
 }
 
