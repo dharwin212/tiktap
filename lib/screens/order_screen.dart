@@ -6,20 +6,8 @@ import '../nav_menu.dart';
 import '../theme.dart';
 import 'home_screen.dart';
 import 'midtrans_snap_screen.dart';
-import 'payment_methods_screen.dart';
 import 'seat_screen.dart';
 
-class _Voucher {
-  final String name;
-  final int amount;
-  const _Voucher(this.name, this.amount);
-}
-
-const _vouchers = [
-  _Voucher('Tanpa voucher', 0),
-  _Voucher('HEMAT5K', 5000),
-  _Voucher('NONTON10', 10000),
-];
 const _admPerTicket = 3000;
 
 /// Langkah 2: Order Confirmation (tab "Order" di navigasi bawah).
@@ -30,168 +18,6 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
-  String? _payId;
-  int _v = 0;
-
-  PaymentMethod? get _sel {
-    var list = AppState.I.payments;
-    if (list.isEmpty) {
-      AppState.I.payments = List.of(defaultPaymentMethods());
-      AppState.I.defaultPaymentId = AppState.I.payments.first.id;
-      list = AppState.I.payments;
-    }
-    return list.firstWhere((m) => m.id == _payId,
-        orElse: () => AppState.I.defaultPayment ?? list.first);
-  }
-
-  Future<void> _choosePayment() async {
-    final r = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0D1824),
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Text('Pay with',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              ),
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (final m in AppState.I.payments)
-                      ListTile(
-                        leading:
-                            Icon(paymentIconFor(m.type), color: AppColors.lightBlue),
-                        title: Row(
-                          children: [
-                            Flexible(child: Text(m.type, overflow: TextOverflow.ellipsis)),
-                            if (m.id == 'pm_midtrans' || m.type.contains('Midtrans')) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.lightBlue.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppColors.lightBlue),
-                                ),
-                                child: const Text('AUTO',
-                                    style: TextStyle(
-                                        color: AppColors.lightBlue,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700)),
-                              ),
-                            ],
-                          ],
-                        ),
-                        subtitle: Text(m.masked,
-                            style: const TextStyle(color: Colors.white60)),
-                        trailing: m.id == _sel?.id
-                            ? const Icon(Icons.check, color: AppColors.lightBlue)
-                            : null,
-                        onTap: () => Navigator.of(ctx).pop(m.id),
-                      ),
-                    ListTile(
-                      leading: const Icon(Icons.add_circle_outline,
-                          color: AppColors.lightBlue),
-                      title: const Text('Kelola metode pembayaran'),
-                      onTap: () => Navigator.of(ctx).pop('_manage'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (r == null || !mounted) return;
-    if (r == '_manage') {
-      await Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()));
-      if (mounted) setState(() {});
-      return;
-    }
-    setState(() => _payId = r);
-  }
-
-  Future<void> _chooseVoucher() async {
-    final r = await showModalBottomSheet<int>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0D1824),
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => SafeArea(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(ctx).size.height * 0.75,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Text('Use Voucher',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              ),
-              Flexible(
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    for (var i = 0; i < _vouchers.length; i++)
-                      ListTile(
-                        leading: const Icon(Icons.local_offer_outlined,
-                            color: AppColors.yellow),
-                        title: Text(_vouchers[i].name),
-                        subtitle: Text('Promo: ${rupiah(_vouchers[i].amount)}',
-                            style: const TextStyle(color: Colors.white60)),
-                        trailing: i == _v
-                            ? const Icon(Icons.check, color: AppColors.lightBlue)
-                            : null,
-                        onTap: () => Navigator.of(ctx).pop(i),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (r != null) setState(() => _v = r);
-  }
 
   Widget _kv(String a, String b, {bool bold = false}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
@@ -236,18 +62,7 @@ class _OrderScreenState extends State<OrderScreen> {
       );
 
   Future<void> _confirm(Order o, int total) async {
-    final pm = _sel;
-    if (pm == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Tambahkan metode pembayaran dulu di Pay with')));
-      return;
-    }
     final id = 'TT${DateTime.now().millisecondsSinceEpoch % 100000000}';
-
-    // Gunakan Midtrans Snap jika metode Midtrans dipilih ATAU jika Server Key Midtrans sudah diisi
-    if (pm.id == 'pm_midtrans' ||
-        pm.type.contains('Midtrans') ||
-        MidtransConfig.isConfigured) {
       // 1. Tampilkan dialog loading
       showDialog(
         context: context,
@@ -390,11 +205,6 @@ class _OrderScreenState extends State<OrderScreen> {
           const SnackBar(content: Text('Pembayaran dibatalkan')),
         );
       }
-      return;
-    }
-
-    // Alur pembayaran langsung / simulasi untuk metode tersimpan lainnya
-    _onSuccess(id, o, total, pm.type);
   }
 
   void _onSuccess(String id, Order o, int total, String method) {
@@ -410,7 +220,6 @@ class _OrderScreenState extends State<OrderScreen> {
       payment: cleanMethod,
       showAt: o.showAt,
     );
-    setState(() => _v = 0);
     AppState.I.addTicket(t); // -> otomatis pindah ke tab Mobile Ticket
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -459,8 +268,7 @@ class _OrderScreenState extends State<OrderScreen> {
         final qty = o.seats.length;
         final price = o.movie.price * qty;
         final adm = _admPerTicket * qty;
-        final promo = _vouchers[_v].amount;
-        final total = (price + adm - promo).clamp(0, 1 << 31).toInt();
+        final total = price + adm;
 
         return ListView(
           padding: EdgeInsets.only(bottom: 96 + MediaQuery.paddingOf(context).bottom),
@@ -517,7 +325,6 @@ class _OrderScreenState extends State<OrderScreen> {
                     ]),
                     const SizedBox(height: 10),
                     _kv('Adm Fee', rupiah(adm)),
-                    _kv('Promo', promo == 0 ? 'Rp 0' : '- ${rupiah(promo)}'),
                     const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: DashedLine()),
@@ -531,61 +338,7 @@ class _OrderScreenState extends State<OrderScreen> {
                         style: TextStyle(color: Colors.white70, fontSize: 11)),
                   ]),
                 ),
-                const SizedBox(height: 14),
-                // Pembayaran & voucher
-                GlassBox(
-                  radius: 18,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Column(children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('Pay with',
-                          style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7), fontSize: 13)),
-                    ),
-                    InkWell(
-                      onTap: _choosePayment,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(_sel?.type ?? 'GOPAY',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600, fontSize: 15)),
-                              const Icon(Icons.chevron_right, color: Colors.white70),
-                            ]),
-                      ),
-                    ),
-                    const Divider(color: Colors.white24, height: 1),
-                    InkWell(
-                      onTap: _chooseVoucher,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Use Voucher',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 15)),
-                                    Text(
-                                        _v == 0
-                                            ? 'Promo: Rp 0'
-                                            : '${_vouchers[_v].name} - Promo: ${rupiah(promo)}',
-                                        style: const TextStyle(
-                                            color: Colors.white70, fontSize: 12)),
-                                  ]),
-                              const Icon(Icons.chevron_right, color: Colors.white70),
-                            ]),
-                      ),
-                    ),
-                  ]),
-                ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
                 GradientButton(
                   text: 'Confirm Order',
                   onTap: () => _confirm(o, total),

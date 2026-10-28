@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'auth_service.dart';
 import 'midtrans_config.dart';
 import 'theme.dart';
-import 'screens/splash_screen.dart';
+import 'screens/auth_screens.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +35,7 @@ class TikTapApp extends StatelessWidget {
       theme: buildTheme(),
       // Di web / layar lebar, tampilan dibingkai seperti layar ponsel (390 px).
       builder: (context, child) => PhoneFrame(child: child!),
-      home: const SplashScreen(),
+      home: const LoginScreen(),
     );
   }
 }
