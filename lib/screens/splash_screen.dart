@@ -45,28 +45,15 @@ class _SplashScreenState extends State<SplashScreen>
             opacity: CurvedAnimation(parent: _c, curve: Curves.easeIn),
             child: ScaleTransition(
               scale: Tween(begin: 0.7, end: 1.0).animate(anim),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(44),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.lightBlue.withValues(alpha: 0.25),
-                      blurRadius: 36,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Text('TIKTAP',
-                      style: TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.lightBlue)),
-                ),
+              child: Image.asset(
+                'assets/images/logo.png',
+                width: 230,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Text('TIKTAP',
+                    style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.lightBlue)),
               ),
             ),
           ),
