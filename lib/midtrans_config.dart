@@ -25,10 +25,21 @@ class MidtransConfig {
   /// Mode Sandbox (true untuk testing/demo, false jika sudah akun live/production).
   static bool isProduction = false;
 
+  /// Server Key bersih tanpa spasi tersembunyi
+  static String get cleanServerKey => serverKey.trim();
+
+  /// Client Key bersih tanpa spasi tersembunyi
+  static String get cleanClientKey => clientKey.trim();
+
   /// URL dasar API Midtrans Snap
   static String get snapUrl => isProduction
       ? 'https://app.midtrans.com/snap/v1/transactions'
       : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
+
+  /// URL alternatif untuk auto-fallback
+  static String get alternativeSnapUrl => isProduction
+      ? 'https://app.sandbox.midtrans.com/snap/v1/transactions'
+      : 'https://app.midtrans.com/snap/v1/transactions';
 
   /// URL dasar Core API Midtrans (status transaksi)
   static String get coreApiUrl => isProduction
@@ -37,9 +48,9 @@ class MidtransConfig {
 
   /// Memeriksa apakah Server Key sudah diisi oleh pengguna (bukan placeholder sample).
   static bool get isConfigured =>
-      serverKey.isNotEmpty &&
-      !serverKey.contains('SAMPLE') &&
-      serverKey.contains('server-');
+      cleanServerKey.isNotEmpty &&
+      !cleanServerKey.contains('SAMPLE') &&
+      cleanServerKey.contains('server-');
 
   // Keys untuk SharedPreferences
   static const _prefServerKey = 'midtrans_server_key';

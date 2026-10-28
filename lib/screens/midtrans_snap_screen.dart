@@ -1,6 +1,7 @@
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../midtrans_config.dart';
 import '../midtrans_service.dart';
@@ -218,6 +219,16 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
             ],
           ),
           actions: [
+            if (!isSim && widget.snapResult.redirectUrl != null)
+              IconButton(
+                icon: const Icon(Icons.open_in_browser_rounded,
+                    color: AppColors.lightBlue, size: 22),
+                tooltip: 'Buka di Browser Luar',
+                onPressed: () => launchUrl(
+                  Uri.parse(widget.snapResult.redirectUrl!),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
             IconButton(
               icon: const Icon(Icons.settings_outlined,
                   color: AppColors.lightBlue, size: 22),

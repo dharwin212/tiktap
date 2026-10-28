@@ -46,7 +46,8 @@ class MidtransService {
     }
 
     try {
-      final authString = '${MidtransConfig.serverKey}:';
+      final cleanKey = MidtransConfig.cleanServerKey;
+      final authString = '$cleanKey:';
       final base64Auth = base64Encode(utf8.encode(authString));
 
       final payload = {
@@ -66,7 +67,8 @@ class MidtransService {
           }
         ],
         'customer_details': {
-          'first_name': customerName.isNotEmpty ? customerName : 'Pelanggan TikTap',
+          'first_name':
+              customerName.isNotEmpty ? customerName : 'Pelanggan TikTap',
           'email': customerEmail.isNotEmpty ? customerEmail : 'guest@tiktap.id',
           'phone': customerPhone.isNotEmpty ? customerPhone : '081234567890',
         },
@@ -80,18 +82,52 @@ class MidtransService {
         }
       };
 
-      debugPrint('[Midtrans] Request ke Snap API: ${MidtransConfig.snapUrl}');
-      final response = await http.post(
-        Uri.parse(MidtransConfig.snapUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Basic $base64Auth',
-        },
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Basic $base64Auth',
+      };
+
+      // 1. Coba request ke URL konfigurasi saat ini (Sandbox atau Production)
+      var targetUrl = MidtransConfig.snapUrl;
+      debugPrint('[Midtrans] Request ke Snap API: $targetUrl');
+      var response = await http.post(
+        Uri.parse(targetUrl),
+        headers: headers,
         body: jsonEncode(payload),
       );
 
-      debugPrint('[Midtrans] Response (${response.statusCode}): ${response.body}');
+      debugPrint(
+          '[Midtrans] Response (${response.statusCode}): ${response.body}');
+
+      // 2. Jika 401 Unauthorized, otomatis coba URL alternatif (auto-detect Sandbox vs Production)
+      if (response.statusCode == 401) {
+        final altUrl = MidtransConfig.alternativeSnapUrl;
+        debugPrint(
+            '[Midtrans] 401 Unauthorized pada $targetUrl. Mencoba auto-fallback ke $altUrl ...');
+        final altResponse = await http.post(
+          Uri.parse(altUrl),
+          headers: headers,
+          body: jsonEncode(payload),
+        );
+        debugPrint(
+            '[Midtrans] Fallback Response (${altResponse.statusCode}): ${altResponse.body}');
+
+        if (altResponse.statusCode == 200 || altResponse.statusCode == 201) {
+          response = altResponse;
+          targetUrl = altUrl;
+          // Otomatis sinkronkan mode production agar panggilan berikutnya langsung benar
+          final newIsProd = altUrl.contains('app.midtrans.com') &&
+              !altUrl.contains('sandbox');
+          await MidtransConfig.save(
+            newServerKey: cleanKey,
+            newClientKey: MidtransConfig.cleanClientKey,
+            newIsProduction: newIsProd,
+          );
+          debugPrint(
+              '[Midtrans] Berhasil auto-fallback! Mode disetel ke isProduction = $newIsProd');
+        }
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -110,6 +146,10 @@ class MidtransService {
 
       // Jika response error dari Midtrans
       String err = 'Gagal membuat transaksi Midtrans (${response.statusCode})';
+      if (response.statusCode == 401) {
+        err =
+            'Server Key Midtrans tidak valid atau salah environment (401). Pastikan Server Key Sandbox dari dashboard.midtrans.com sudah benar.';
+      }
       try {
         final errJson = jsonDecode(response.body);
         if (errJson is Map && errJson['error_messages'] != null) {

@@ -287,13 +287,77 @@ class _OrderScreenState extends State<OrderScreen> {
       Navigator.of(context, rootNavigator: true).pop(); // Tutup loading
 
       if (!snapRes.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                snapRes.errorMessage ?? 'Gagal membuat transaksi Midtrans'),
-            backgroundColor: Colors.redAccent,
+        final useSimulator = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: const Color(0xFF0D1824),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+                SizedBox(width: 8),
+                Text('Kendala Midtrans Snap', style: TextStyle(fontSize: 16)),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  snapRes.errorMessage ?? 'Gagal membuat transaksi Midtrans.',
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'Kamu tetap dapat melanjutkan pemesanan dengan membuka Simulator Sandbox.',
+                  style: TextStyle(color: AppColors.lightBlue, fontSize: 12),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop(false);
+                  MidtransConfig.showSettingsDialog(context);
+                },
+                child: const Text('Atur Kunci API',
+                    style: TextStyle(color: Colors.white60)),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.lightBlue,
+                  foregroundColor: const Color(0xFF0D1824),
+                ),
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Buka Simulator Sandbox'),
+              ),
+            ],
           ),
         );
+
+        if (useSimulator == true && mounted) {
+          final simRes = SnapTransactionResult(
+            success: true,
+            orderId: id,
+            isSimulation: true,
+          );
+          final res = await Navigator.of(context).push<PaymentResult>(
+            MaterialPageRoute(
+              builder: (_) => MidtransSnapScreen(
+                orderId: id,
+                totalAmount: total,
+                movieTitle: o.movie.title,
+                seats: o.seats,
+                snapResult: simRes,
+              ),
+            ),
+          );
+          if (!mounted) return;
+          if (res != null && res.status == PaymentStatus.success) {
+            _onSuccess(id, o, total, res.method);
+          }
+        }
         return;
       }
 
@@ -313,26 +377,7 @@ class _OrderScreenState extends State<OrderScreen> {
       if (!mounted) return;
 
       if (res != null && res.status == PaymentStatus.success) {
-        final t = Ticket(
-          id: id,
-          movie: o.movie,
-          cinema: o.cinema,
-          date: o.date,
-          time: o.time,
-          seats: o.seats,
-          total: total,
-          payment: res.method,
-          showAt: o.showAt,
-        );
-        setState(() => _v = 0);
-        AppState.I.addTicket(t); // -> otomatis pindah ke tab Mobile Ticket
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('Pembayaran berhasil (${res.method}), tiket siap dipakai!'),
-            backgroundColor: const Color(0xFF0B6BA8),
-          ),
-        );
+        _onSuccess(id, o, total, res.method);
       } else if (res?.status == PaymentStatus.pending) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -349,6 +394,10 @@ class _OrderScreenState extends State<OrderScreen> {
     }
 
     // Alur pembayaran langsung / simulasi untuk metode tersimpan lainnya
+    _onSuccess(id, o, total, pm.type);
+  }
+
+  void _onSuccess(String id, Order o, int total, String method) {
     final t = Ticket(
       id: id,
       movie: o.movie,
@@ -357,13 +406,17 @@ class _OrderScreenState extends State<OrderScreen> {
       time: o.time,
       seats: o.seats,
       total: total,
-      payment: pm.type,
+      payment: method,
       showAt: o.showAt,
     );
     setState(() => _v = 0);
     AppState.I.addTicket(t); // -> otomatis pindah ke tab Mobile Ticket
     ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pembayaran berhasil, tiket siap dipakai')));
+      SnackBar(
+        content: Text('Pembayaran berhasil ($method), tiket siap dipakai!'),
+        backgroundColor: const Color(0xFF0B6BA8),
+      ),
+    );
   }
 
   @override
