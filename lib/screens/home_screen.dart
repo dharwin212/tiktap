@@ -58,7 +58,7 @@ class PosterCard extends StatelessWidget {
                   : Image.asset(movie.posterAsset!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => _fallback()),
-              if (movie.rating > 0)
+              if (movie.rating > 0 && !movie.isComingSoon)
                 Positioned(
                   top: 6,
                   right: 6,
@@ -215,28 +215,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: const TextStyle(
                                 color: Colors.white70, fontSize: 13),
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.star_rounded,
-                                  color: AppColors.yellow, size: 22),
-                              const SizedBox(width: 4),
-                              Text(
-                                m.rating > 0 ? m.rating.toStringAsFixed(1) : '8.5',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                '/ 10 (Anticipated)',
-                                style: TextStyle(
-                                    color: Colors.white54, fontSize: 11),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ),
@@ -382,12 +360,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 setState(() => _q = '');
               },
               child: const Icon(Icons.close, color: Colors.white70, size: 20),
-            )
-          else
-            GestureDetector(
-              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pencarian suara belum tersedia'))),
-              child: const Icon(Icons.mic, color: Colors.white70, size: 20),
             ),
         ]),
       ),
