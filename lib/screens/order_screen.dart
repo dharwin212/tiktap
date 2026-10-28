@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../midtrans_config.dart';
 import '../midtrans_service.dart';
 import '../models.dart';
 import '../nav_menu.dart';
@@ -243,8 +244,10 @@ class _OrderScreenState extends State<OrderScreen> {
     }
     final id = 'TT${DateTime.now().millisecondsSinceEpoch % 100000000}';
 
-    // Jika metode yang dipilih adalah Midtrans Snap (atau default)
-    if (pm.id == 'pm_midtrans' || pm.type.contains('Midtrans')) {
+    // Gunakan Midtrans Snap jika metode Midtrans dipilih ATAU jika Server Key Midtrans sudah diisi
+    if (pm.id == 'pm_midtrans' ||
+        pm.type.contains('Midtrans') ||
+        MidtransConfig.isConfigured) {
       // 1. Tampilkan dialog loading
       showDialog(
         context: context,

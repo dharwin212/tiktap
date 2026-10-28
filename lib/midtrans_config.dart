@@ -13,14 +13,14 @@ import 'theme.dart';
 class MidtransConfig {
   /// Default Server Key Sandbox (ganti dengan Server Key akun Midtrans milikmu).
   /// Contoh format: 'SB-Mid-server-xxxxxxxxxxxxxx'
-  static String serverKey = 'SB-Mid-server-xWzNQqD_SAMPLE_KEY';
+  static String serverKey = 'Mid-server-3NBO9DjWFAcOfusDnQMMAQPe';
 
   /// Default Client Key Sandbox.
   /// Contoh format: 'SB-Mid-client-xxxxxxxxxxxxxx'
-  static String clientKey = 'SB-Mid-client-SAMPLE_KEY';
+  static String clientKey = 'Mid-client-getQb53L9iYkhFDd';
 
   /// Merchant ID (opsional, untuk identitas toko).
-  static String merchantId = 'G123456789';
+  static String merchantId = 'M797728389';
 
   /// Mode Sandbox (true untuk testing/demo, false jika sudah akun live/production).
   static bool isProduction = false;
@@ -39,7 +39,7 @@ class MidtransConfig {
   static bool get isConfigured =>
       serverKey.isNotEmpty &&
       !serverKey.contains('SAMPLE') &&
-      serverKey.startsWith('SB-Mid-server-');
+      serverKey.contains('server-');
 
   // Keys untuk SharedPreferences
   static const _prefServerKey = 'midtrans_server_key';
@@ -54,8 +54,13 @@ class MidtransConfig {
       final ck = sp.getString(_prefClientKey);
       final prod = sp.getBool(_prefIsProduction);
 
-      if (sk != null && sk.isNotEmpty) serverKey = sk;
-      if (ck != null && ck.isNotEmpty) clientKey = ck;
+      // Hanya gunakan dari SP jika bukan sample placeholder
+      if (sk != null && sk.isNotEmpty && !sk.contains('SAMPLE')) {
+        serverKey = sk;
+      }
+      if (ck != null && ck.isNotEmpty && !ck.contains('SAMPLE')) {
+        clientKey = ck;
+      }
       if (prod != null) isProduction = prod;
     } catch (e) {
       debugPrint('[MidtransConfig] Gagal memuat preferensi: $e');
@@ -217,3 +222,4 @@ class MidtransConfig {
     );
   }
 }
+

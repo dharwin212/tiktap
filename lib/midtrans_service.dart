@@ -49,8 +49,6 @@ class MidtransService {
       final authString = '${MidtransConfig.serverKey}:';
       final base64Auth = base64Encode(utf8.encode(authString));
 
-      final pricePerItem = (grossAmount / (seatCount > 0 ? seatCount : 1)).round();
-
       final payload = {
         'transaction_details': {
           'order_id': orderId,
@@ -59,9 +57,12 @@ class MidtransService {
         'item_details': [
           {
             'id': 'ITEM-${orderId.substring(0, orderId.length.clamp(0, 20))}',
-            'price': pricePerItem,
-            'quantity': seatCount > 0 ? seatCount : 1,
-            'name': 'Tiket: $movieTitle ($seatCount kursi)'.substring(0, 50.clamp(0, 'Tiket: $movieTitle ($seatCount kursi)'.length)),
+            'price': grossAmount,
+            'quantity': 1,
+            'name': 'Tiket: $movieTitle ($seatCount kursi)'.substring(
+                0,
+                50.clamp(
+                    0, 'Tiket: $movieTitle ($seatCount kursi)'.length)),
           }
         ],
         'customer_details': {
@@ -160,3 +161,4 @@ class MidtransService {
     return null;
   }
 }
+

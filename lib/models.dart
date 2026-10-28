@@ -319,7 +319,7 @@ class ChatMsg {
 class AppState extends ChangeNotifier {
   AppState._() {
     payments = List.of(defaultPaymentMethods());
-    defaultPaymentId = payments.first.id;
+    defaultPaymentId = 'pm_midtrans';
     // Segarkan tampilan berkala agar status tiket berubah saat jam tayang lewat.
     Timer.periodic(const Duration(seconds: 30), (_) {
       if (tickets.isNotEmpty) notifyListeners();
@@ -453,7 +453,11 @@ class AppState extends ChangeNotifier {
   // ---- Metode pembayaran ----
   PaymentMethod? get defaultPayment {
     if (payments.isEmpty) return null;
-    return payments.firstWhere((m) => m.id == defaultPaymentId,
+    if (defaultPaymentId != null) {
+      final found = payments.where((m) => m.id == defaultPaymentId);
+      if (found.isNotEmpty) return found.first;
+    }
+    return payments.firstWhere((m) => m.id == 'pm_midtrans',
         orElse: () => payments.first);
   }
 

@@ -70,9 +70,9 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
               setState(() => _progress = 100);
             },
             onWebResourceError: (error) {
-              debugPrint('[SnapWebView] Error: ${error.description}');
-              if (mounted && error.errorCode != -999) {
-                // Jangan anggap navigasi redirect sebagai error
+              debugPrint('[SnapWebView] Error: ${error.description} (mainFrame: ${error.isForMainFrame})');
+              // Hanya anggap error fatal jika halaman utama yang gagal dimuat, bukan script/iklan/favicon
+              if (mounted && error.errorCode != -999 && (error.isForMainFrame ?? false)) {
                 setState(() {
                   _hasError = true;
                   _errorMessage = error.description;
