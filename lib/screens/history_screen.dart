@@ -7,6 +7,45 @@ import 'home_screen.dart';
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
 
+  Future<void> _confirmClear(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0D1824),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Hapus Semua Riwayat?'),
+        content: const Text(
+          'Semua riwayat pembelian tiket akan dihapus secara permanen.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Hapus Semua', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true) {
+      AppState.I.clearTickets();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Riwayat pembelian berhasil dibersihkan')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -24,6 +63,13 @@ class HistoryScreen extends StatelessWidget {
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                 ),
               ),
+              if (list.isNotEmpty) ...[
+                RoundIconButton(
+                  icon: Icons.delete_outline_rounded,
+                  onTap: () => _confirmClear(context),
+                ),
+                const SizedBox(width: 8),
+              ],
               const NavMenuButton(),
             ]),
           ),

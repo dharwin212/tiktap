@@ -27,16 +27,38 @@ class AuthService {
 
     // Pulihkan metode pembayaran & tiket untuk email saat ini / terakhir
     final lastEmail = _p.getString('last_active_email') ?? AppState.I.email;
+
+    // Bersihkan riwayat transaksi bekas testing atas permintaan pengguna
+    if (!(_p.getBool('history_cleared_v2') ?? false)) {
+      AppState.I.tickets.clear();
+      final allKeys = _p.getKeys();
+      for (final k in allKeys) {
+        if (k.startsWith('tickets_')) {
+          await _p.remove(k);
+        }
+      }
+      if (SupabaseConfig.isConfigured) {
+        final user = Supabase.instance.client.auth.currentUser;
+        if (user != null) {
+          try {
+            await Supabase.instance.client
+                .from('tickets')
+                .delete()
+                .eq('user_id', user.id);
+          } catch (_) {}
+        }
+      }
+      await _p.setBool('history_cleared_v2', true);
+    }
+
     final savedPayments = _loadPayments(lastEmail);
-    final savedDefPayment =
-        _p.getString('def_payment_${lastEmail.toLowerCase()}');
     final savedTickets = _loadTicketsLocal(lastEmail);
 
     AppState.I.payments = savedPayments.isNotEmpty
         ? savedPayments
         : List.of(defaultPaymentMethods());
-    AppState.I.defaultPaymentId =
-        savedDefPayment ?? AppState.I.payments.first.id;
+    AppState.I.defaultPaymentId = AppState.I.payments.first.id;
+    savePayments(lastEmail, AppState.I.payments, AppState.I.defaultPaymentId);
 
     if (savedTickets.isNotEmpty) {
       AppState.I.tickets = savedTickets;
@@ -91,13 +113,20 @@ class AuthService {
           .eq('user_id', userId);
 
       if ((data as List).isNotEmpty) {
-        return (data as List).map((row) {
+        final list = (data as List).map((row) {
           return PaymentMethod(
             id: row['id'] as String,
             type: row['type'] as String,
             number: row['number'] as String,
           );
+        }).where((p) {
+          final t = p.type.trim().toLowerCase();
+          return t != 'gopay' &&
+              t != 'dana' &&
+              t != 'ovo' &&
+              !t.contains('transfer bank');
         }).toList();
+        if (list.isNotEmpty) return list;
       }
     } catch (e) {
       debugPrint('[AuthService] Gagal memuat payment methods dari db: $e');
@@ -113,7 +142,7 @@ class AuthService {
             'user_id': userId,
             'type': m.type,
             'number': m.number,
-            'is_default': m.id == 'pm_gopay',
+            'is_default': m.id == 'pm_midtrans',
           });
         }
       } catch (e) {
@@ -132,6 +161,13 @@ class AuthService {
       try {
         final list = (jsonDecode(raw) as List)
             .map((e) => PaymentMethod.fromJson(Map<String, dynamic>.from(e)))
+            .where((p) {
+              final t = p.type.trim().toLowerCase();
+              return t != 'gopay' &&
+                  t != 'dana' &&
+                  t != 'ovo' &&
+                  !t.contains('transfer bank');
+            })
             .toList();
         if (list.isNotEmpty) return list;
       } catch (_) {}

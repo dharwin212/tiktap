@@ -229,7 +229,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                           TextButton.icon(
                             icon: const Icon(Icons.refresh, color: AppColors.lightBlue),
                             label: const Text(
-                              'Muat metode default (GOPAY, DANA, OVO, BCA)',
+                              'Muat metode default (Midtrans Snap)',
                               style: TextStyle(color: AppColors.lightBlue),
                             ),
                             onPressed: () {
@@ -266,10 +266,14 @@ class PaymentMethodsScreen extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Row(children: [
-                                        Text(m.type,
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 15)),
+                                        Expanded(
+                                          child: Text(m.type,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 15)),
+                                        ),
                                         if (isDef) ...[
                                           const SizedBox(width: 8),
                                           Container(
@@ -288,9 +292,13 @@ class PaymentMethodsScreen extends StatelessWidget {
                                       ]),
                                       const SizedBox(height: 2),
                                       Row(children: [
-                                        Text(m.masked,
-                                            style: const TextStyle(
-                                                color: Colors.white70, fontSize: 13)),
+                                        Expanded(
+                                          child: Text(m.masked,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                  color: Colors.white70, fontSize: 13)),
+                                        ),
                                         const SizedBox(width: 8),
                                         const Icon(Icons.edit_outlined,
                                             size: 14, color: AppColors.lightBlue),

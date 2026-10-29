@@ -298,13 +298,8 @@ class PaymentMethod {
 List<PaymentMethod> defaultPaymentMethods() => const [
       PaymentMethod(
           id: 'pm_midtrans',
-          type: 'Midtrans Snap (QRIS / VA / E-Wallet)',
+          type: 'Midtrans Snap',
           number: 'Otomatis'),
-      PaymentMethod(id: 'pm_gopay', type: 'GOPAY', number: '081234567890'),
-      PaymentMethod(id: 'pm_dana', type: 'DANA', number: '081234567890'),
-      PaymentMethod(id: 'pm_ovo', type: 'OVO', number: '081234567890'),
-      PaymentMethod(
-          id: 'pm_bca', type: 'Transfer Bank (BCA)', number: '1234567890'),
     ];
 
 class AppNotification {
@@ -409,6 +404,12 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void clearTickets() {
+    tickets.clear();
+    onTicketsChanged?.call(email, tickets);
+    notifyListeners();
+  }
+
   void login(
     String name, {
     String? mail,
@@ -426,8 +427,15 @@ class AppState extends ChangeNotifier {
         : mail;
 
     if (savedPayments != null && savedPayments.isNotEmpty) {
-      payments = savedPayments;
-      defaultPaymentId = savedDefaultPaymentId ?? savedPayments.first.id;
+      final filtered = savedPayments.where((p) {
+        final t = p.type.trim().toLowerCase();
+        return t != 'gopay' &&
+            t != 'dana' &&
+            t != 'ovo' &&
+            !t.contains('transfer bank');
+      }).toList();
+      payments = filtered.isNotEmpty ? filtered : List.of(defaultPaymentMethods());
+      defaultPaymentId = savedDefaultPaymentId ?? payments.first.id;
     } else {
       payments = List.of(defaultPaymentMethods());
       defaultPaymentId = payments.first.id;
