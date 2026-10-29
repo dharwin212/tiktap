@@ -176,6 +176,16 @@ class _OrderScreenState extends State<OrderScreen> {
       return;
     }
 
+    // Notifikasi jika dialihkan ke simulator karena jaringan
+    if (snapRes.isSimulation && snapRes.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(snapRes.errorMessage!),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+
     // 2. Buka WebView Pop-up Midtrans Snap
     final res = await Navigator.of(context).push<PaymentResult>(
       MaterialPageRoute(
