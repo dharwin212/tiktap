@@ -133,7 +133,7 @@ const nowPlaying = [
     colors: [Color(0xFF3A1010), Color(0xFF0B0B0B)],
     posterAsset: 'assets/posters/resident_evil.jpg',
     description:
-        'Serangan virus mematikan mengubah populasi kota menjadi zombie haus darah, memaksa para penyintas berjuang mati-matian meloloskan diri.',
+        'A deadly virus outbreak turns the city population into bloodthirsty zombies, forcing survivors to fight desperately for their escape.',
   ),
   Movie(
     title: 'Spider-Man: Brand New Day',
@@ -144,7 +144,7 @@ const nowPlaying = [
     colors: [Color(0xFFB3202A), Color(0xFF1C2A5E)],
     posterAsset: 'assets/posters/spiderman.jpg',
     description:
-        'Peter Parker memulai babak baru hidupnya sebagai pahlawan tanpa topeng pengenal, menghadapi ancaman musuh baru di kota New York.',
+        'Peter Parker begins a new chapter in his life as an unmasked hero, confronting emerging threats in New York City.',
   ),
   Movie(
     title: 'Aquaman',
@@ -155,7 +155,7 @@ const nowPlaying = [
     colors: [Color(0xFF1B6E8A), Color(0xFF0B2A3F)],
     posterAsset: 'assets/posters/aquaman.jpg',
     description:
-        'Arthur Curry harus mengklaim hak warisnya sebagai Raja Atlantis untuk mencegah perang besar antara dunia laut dan daratan.',
+        'Arthur Curry must claim his birthright as the King of Atlantis to prevent a devastating war between the ocean and the surface world.',
   ),
   Movie(
     title: 'The Odyssey',
@@ -166,7 +166,7 @@ const nowPlaying = [
     colors: [Color(0xFF6A2E12), Color(0xFF14090A)],
     posterAsset: 'assets/posters/the_odyssey.jpg',
     description:
-        'Kisah epik kepulangan Odysseus setelah Perang Troya yang penuh rintangan mistis, monster laut, dan ujian takdir para dewa Yunani.',
+        'The epic tale of Odysseus returning home after the Trojan War, facing mythical trials, sea monsters, and the wrath of ancient Greek gods.',
   ),
 ];
 
@@ -180,7 +180,7 @@ const comingSoon = [
     colors: [Color(0xFF1F5A4A), Color(0xFF0A1418)],
     posterAsset: 'assets/posters/avengers_doomsday.jpg',
     description:
-        'Para pahlawan terkuat Bumi bersatu kembali menghadapi ancaman kosmik terbesar dari Doctor Doom yang berencana menguasai dan merestrukturisasi seluruh multiverse.',
+        'Earth\'s mightiest heroes reunite to confront the ultimate cosmic threat of Doctor Doom, who plots to conquer and restructure the multiverse.',
     isComingSoon: true,
   ),
   Movie(
@@ -192,7 +192,7 @@ const comingSoon = [
     colors: [Color(0xFF7A3A14), Color(0xFF14090A)],
     posterAsset: 'assets/posters/the_odyssey.jpg',
     description:
-        'Petualangan legendaris sang pahlawan Ithaca menyeberangi lautan terkutuk demi kembali ke pelukan Penelope, menghadapi makhluk mitologi terkejam dalam sejarah Yunani Kuno.',
+        'The legendary adventure of Ithaca\'s hero crossing cursed seas to return to Penelope, battling monstrous mythological creatures of ancient Greece.',
     isComingSoon: true,
   ),
   Movie(
@@ -204,7 +204,7 @@ const comingSoon = [
     colors: [Color(0xFF6C6A4C), Color(0xFF22221A)],
     posterAsset: 'assets/posters/digger.jpg',
     description:
-        'Sebuah drama emosional berlatar wilayah pertambangan pedalaman, mengupas dinamika ikatan ayah dan anak serta konflik perebutan tanah yang sarat ketegangan moral.',
+        'An emotional drama set in an outback mining town, exploring the bond between father and son amidst a tense moral battle for land.',
     isComingSoon: true,
   ),
 ];
@@ -219,7 +219,7 @@ const topMovies = [
     colors: [Color(0xFFB4541C), Color(0xFF241008)],
     posterAsset: 'assets/posters/the_shawsank_reedemption.jpg',
     description:
-        'Kisah persahabatan dan harapan abadi seorang bankir yang dijatuhi hukuman seumur hidup di penjara Shawshank atas kejahatan yang tidak dilakukannya.',
+        'The enduring story of hope and friendship between two imprisoned men who find solace and eventual redemption over decades.',
   ),
   Movie(
     title: 'The Godfather',
@@ -230,7 +230,7 @@ const topMovies = [
     colors: [Color(0xFF8A6A1E), Color(0xFF0A0A0A)],
     posterAsset: 'assets/posters/the_godfather.jpg',
     description:
-        'Kisah legendaris keluarga mafia Corleone dan transformasi Michael dari putra yang enggan menjadi bos sindikat kejahatan yang kejam dan disegani.',
+        'The legendary saga of the Corleone mafia family and the transformation of Michael from reluctant son to ruthless crime boss.',
   ),
   Movie(
     title: 'Green Book',
@@ -241,7 +241,7 @@ const topMovies = [
     colors: [Color(0xFF1FA3B8), Color(0xFF0B3A4A)],
     posterAsset: 'assets/posters/green_book.jpg',
     description:
-        'Pianis jazz klasik berkulit hitam dan sopir keturunan Italia-Amerika melakukan tur konser keliling wilayah Selatan Amerika Serikat yang sarat diskriminasi rasial.',
+        'A world-class African-American pianist embarks on a concert tour through the Deep South with an Italian-American driver and bodyguard.',
   ),
 ];
 
@@ -266,8 +266,9 @@ class PaymentMethod {
   const PaymentMethod({required this.id, required this.type, required this.number});
 
   String get masked {
-    if (number.toLowerCase() == 'otomatis' || number.isEmpty) {
-      return 'Instan (QRIS / VA / E-Wallet)';
+    final lower = number.toLowerCase().trim();
+    if (lower == 'otomatis' || lower == 'instant' || lower == 'automatic' || lower.isEmpty) {
+      return 'Instant (QRIS / VA / E-Wallet)';
     }
     final d = number.replaceAll(RegExp(r'\D'), '');
     return d.length <= 4 ? d : '•••• ${d.substring(d.length - 4)}';
@@ -299,7 +300,7 @@ List<PaymentMethod> defaultPaymentMethods() => const [
       PaymentMethod(
           id: 'pm_midtrans',
           type: 'Midtrans Snap',
-          number: 'Otomatis'),
+          number: 'Instant'),
     ];
 
 class AppNotification {
@@ -396,9 +397,9 @@ class AppState extends ChangeNotifier {
     tab = 2; // buka tab Mobile Ticket
     onTicketsChanged?.call(email, tickets);
     _push(
-      'Pembelian berhasil',
-      'Tiket ${t.movie.title}, ${t.date} ${t.time}, Row ${seatRows(t.seats)} '
-          'Seats ${seatNumbers(t.seats)}. Tunjukkan barcode di Mobile Ticket.',
+      'Purchase successful',
+      'Ticket for ${t.movie.title}, ${t.date} ${t.time}, Row ${seatRows(t.seats)} '
+          'Seats ${seatNumbers(t.seats)}. Show your barcode in Mobile Ticket.',
       'purchase',
     );
     notifyListeners();
@@ -441,10 +442,10 @@ class AppState extends ChangeNotifier {
       defaultPaymentId = payments.first.id;
     }
 
-    _push('Selamat datang di TikTap',
-        'Halo $username! Pilih film favoritmu dan pesan tiketnya sekarang.', 'info');
-    _push('Promo untuk kamu',
-        'Pakai voucher HEMAT5K atau NONTON10 saat Order Confirmation.', 'promo');
+    _push('Welcome to TikTap',
+        'Hello $username! Choose your favorite movie and book your tickets now.', 'info');
+    _push('Special offer for you',
+        'Use voucher HEMAT5K or NONTON10 during Order Confirmation.', 'promo');
     notifyListeners();
   }
 

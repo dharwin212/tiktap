@@ -13,7 +13,7 @@ class SeatScreen extends StatefulWidget {
 
 class _SeatScreenState extends State<SeatScreen> {
   static const _times = ['13:00', '15:30', '18:00', '19:30', '21:15'];
-  static const _dates = ['Hari ini', 'Besok', 'Lusa'];
+  static const _dates = ['Today', 'Tomorrow', 'Day After'];
   static const _rows = ['A', 'B', 'C', 'D', 'E'];
 
   int _time = 0;
@@ -65,8 +65,8 @@ class _SeatScreenState extends State<SeatScreen> {
 
   String _dateLabel() {
     final d = DateTime.now().add(Duration(days: _date));
-    const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-    const hari = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
+    const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const hari = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return '${hari[d.weekday - 1]}, ${d.day} ${bulan[d.month - 1]} ${d.year}';
   }
 
@@ -127,11 +127,12 @@ class _SeatScreenState extends State<SeatScreen> {
                           const SizedBox(height: 6),
                           Text('Genre: ${m.genre}',
                               style: const TextStyle(color: Colors.white70)),
-                          Text('Durasi: ${m.minutes ~/ 60}j ${m.minutes % 60}m',
+                          Text('Duration: ${m.minutes ~/ 60}h ${m.minutes % 60}m',
                               style: const TextStyle(color: Colors.white70)),
-                          Text('Rating: ⭐ ${m.rating > 0 ? m.rating.toStringAsFixed(1) : "8.0"} / 10',
-                              style: const TextStyle(color: AppColors.yellow, fontWeight: FontWeight.w600)),
-                          Text('Harga: ${rupiah(m.price)} / kursi',
+                          if (!m.isComingSoon)
+                            Text('Rating: ⭐ ${m.rating > 0 ? m.rating.toStringAsFixed(1) : "8.0"} / 10',
+                                style: const TextStyle(color: AppColors.yellow, fontWeight: FontWeight.w600)),
+                          Text('Price: ${rupiah(m.price)} / seat',
                               style: const TextStyle(
                                   color: AppColors.lightBlue,
                                   fontWeight: FontWeight.w600)),
@@ -143,7 +144,7 @@ class _SeatScreenState extends State<SeatScreen> {
                 if (m.description.isNotEmpty) ...[
                   const SizedBox(height: 14),
                   const Text(
-                    'Sinopsis',
+                    'Synopsis',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
@@ -154,12 +155,12 @@ class _SeatScreenState extends State<SeatScreen> {
                 ],
                 const SizedBox(height: 14),
                 const Text(
-                  'Silakan pilih tanggal tayang, jam penayangan, dan nomor kursi yang kamu inginkan, lalu tekan "Lanjut" untuk melakukan pembayaran.',
+                  'Please select a show date, showtime, and seats, then press "Continue" to proceed to payment.',
                   style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
                 ),
                 const SizedBox(height: 16),
                 GradientButton(
-                  text: 'Tutup',
+                  text: 'Close',
                   onTap: () => Navigator.of(ctx).pop(),
                 ),
               ],
@@ -198,7 +199,7 @@ class _SeatScreenState extends State<SeatScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                      'Kursi $id sudah terisi untuk jadwal ini. Silakan pilih kursi lain.'),
+                      'Seat $id is already taken for this showtime. Please choose another seat.'),
                   duration: const Duration(seconds: 1),
                   behavior: SnackBarBehavior.floating,
                 ),
@@ -255,7 +256,7 @@ class _SeatScreenState extends State<SeatScreen> {
                         onTap: () => Navigator.of(context).pop()),
                     const Expanded(
                       child: Center(
-                        child: Text('Pilih Kursi',
+                        child: Text('Select Seat',
                             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                       ),
                     ),
@@ -281,17 +282,17 @@ class _SeatScreenState extends State<SeatScreen> {
                                     style: const TextStyle(
                                         fontSize: 18, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 6),
-                                Text('${m.genre}  |  ${m.minutes ~/ 60}j ${m.minutes % 60}m',
+                                Text('${m.genre}  |  ${m.minutes ~/ 60}h ${m.minutes % 60}m',
                                     style: const TextStyle(
                                         color: Colors.white70, fontSize: 13)),
                                 const SizedBox(height: 6),
-                                Text('${rupiah(m.price)} / kursi',
+                                Text('${rupiah(m.price)} / seat',
                                     style: const TextStyle(color: AppColors.lightBlue)),
                               ]),
                         ),
                       ]),
                       const SizedBox(height: 20),
-                      const Text('Tanggal',
+                      const Text('Date',
                           style: TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 10),
                       Row(children: [
@@ -302,7 +303,7 @@ class _SeatScreenState extends State<SeatScreen> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                      'Semua jam tayang untuk hari ini sudah lewat. Silakan pilih hari Besok atau Lusa.'),
+                                      'All showtimes for today have passed. Please select Tomorrow or Day After.'),
                                   duration: Duration(seconds: 2),
                                 ),
                               );
@@ -318,7 +319,7 @@ class _SeatScreenState extends State<SeatScreen> {
                           }),
                       ]),
                       const SizedBox(height: 16),
-                      const Text('Jam tayang',
+                      const Text('Showtime',
                           style: TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 10),
                       SingleChildScrollView(
@@ -354,7 +355,7 @@ class _SeatScreenState extends State<SeatScreen> {
                       const Center(
                           child: Padding(
                         padding: EdgeInsets.only(top: 6, bottom: 14),
-                        child: Text('Layar',
+                        child: Text('Screen',
                             style: TextStyle(color: Colors.white54, fontSize: 12)),
                       )),
                       Center(
@@ -370,9 +371,9 @@ class _SeatScreenState extends State<SeatScreen> {
                       ),
                       const SizedBox(height: 10),
                       const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        _Legend(color: Color(0x38FFFFFF), text: 'Tersedia'),
-                        _Legend(color: AppColors.yellow, text: 'Dipilih'),
-                        _Legend(color: Colors.white12, text: 'Terisi'),
+                        _Legend(color: Color(0x38FFFFFF), text: 'Available'),
+                        _Legend(color: AppColors.yellow, text: 'Selected'),
+                        _Legend(color: Colors.white12, text: 'Taken'),
                       ]),
                     ],
                   ),
@@ -385,7 +386,7 @@ class _SeatScreenState extends State<SeatScreen> {
                         children: [
                           Expanded(
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text(_seats.isEmpty ? 'Pilih kursi' : sorted.join(', '),
+                              Text(_seats.isEmpty ? 'Select seats' : sorted.join(', '),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -402,13 +403,13 @@ class _SeatScreenState extends State<SeatScreen> {
                             child: Opacity(
                               opacity: _seats.isEmpty ? 0.4 : 1,
                               child: GradientButton(
-                                text: 'Lanjut',
+                                text: 'Continue',
                                 onTap: () {
                                   if (_seats.isEmpty) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                            'Silakan pilih minimal 1 kursi terlebih dahulu untuk melanjutkan ke pembayaran.'),
+                                            'Please select at least 1 seat to continue to payment.'),
                                         duration: Duration(seconds: 2),
                                       ),
                                     );
@@ -418,7 +419,7 @@ class _SeatScreenState extends State<SeatScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                            'Jam tayang yang dipilih sudah lewat. Silakan pilih jam lain.'),
+                                            'The selected showtime has already passed. Please select another time.'),
                                         duration: Duration(seconds: 2),
                                       ),
                                     );

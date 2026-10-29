@@ -117,7 +117,7 @@ class MidtransConfig {
             children: [
               Icon(Icons.payment, color: AppColors.lightBlue, size: 24),
               SizedBox(width: 10),
-              Text('Pengaturan Midtrans',
+              Text('Midtrans Settings',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
             ],
           ),
@@ -135,7 +135,7 @@ class MidtransConfig {
                         color: AppColors.lightBlue.withValues(alpha: 0.3)),
                   ),
                   child: const Text(
-                    'Dapatkan Server Key & Client Key gratis di dashboard.midtrans.com pada menu Settings -> Access Keys (pilih Sandbox).',
+                    'Get free Server Key & Client Key from dashboard.midtrans.com under Settings -> Access Keys (select Sandbox).',
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ),
@@ -190,7 +190,7 @@ class MidtransConfig {
                       onChanged: (v) => setS(() => isProd = v ?? false),
                     ),
                     const Expanded(
-                      child: Text('Mode Production (Live)',
+                      child: Text('Production Mode (Live)',
                           style: TextStyle(fontSize: 13)),
                     ),
                   ],
@@ -202,7 +202,7 @@ class MidtransConfig {
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child:
-                  const Text('Batal', style: TextStyle(color: Colors.white60)),
+                  const Text('Cancel', style: TextStyle(color: Colors.white60)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -221,11 +221,11 @@ class MidtransConfig {
                   Navigator.of(ctx).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Kunci Midtrans berhasil disimpan!')),
+                        content: Text('Midtrans keys saved successfully!')),
                   );
                 }
               },
-              child: const Text('Simpan'),
+              child: const Text('Save'),
             ),
           ],
         ),

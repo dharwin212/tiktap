@@ -211,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '${m.genre}  •  ${m.minutes ~/ 60}j ${m.minutes % 60}m',
+                            '${m.genre}  •  ${m.minutes ~/ 60}h ${m.minutes % 60}m',
                             style: const TextStyle(
                                 color: Colors.white70, fontSize: 13),
                           ),
@@ -222,14 +222,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'Sinopsis Film',
+                  'Synopsis',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   m.description.isNotEmpty
                       ? m.description
-                      : 'Film spektakuler ini segera tayang di TikTap XXI. Nantikan petualangan serunya dan pantau tanggal rilis resminya!',
+                      : 'This spectacular movie is coming soon to TikTap XXI. Stay tuned for official release dates!',
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 13.5,
@@ -251,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Pemesanan tiket untuk film ini belum dibuka. Anda akan diberi tahu saat tiket mulai dijual.',
+                          'Ticket booking for this movie is not yet open. You will be notified when tickets become available.',
                           style: TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                       ),
@@ -271,14 +271,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         icon: const Icon(Icons.notifications_active_outlined,
                             size: 18, color: AppColors.yellow),
-                        label: const Text('Ingatkan Saya',
+                        label: const Text('Remind Me',
                             style: TextStyle(color: Colors.white)),
                         onPressed: () {
                           Navigator.of(ctx).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                  'Pengingat untuk film ${m.title} telah diaktifkan!'),
+                                  'Reminder set for ${m.title}!'),
                             ),
                           );
                         },
@@ -287,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: GradientButton(
-                        text: 'Tutup',
+                        text: 'Close',
                         onTap: () => Navigator.of(ctx).pop(),
                       ),
                     ),
@@ -371,7 +371,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('${res.length} hasil untuk "${_q.trim()}"',
+        Text('${res.length} results for "${_q.trim()}"',
             style: const TextStyle(color: Colors.white70, fontSize: 13)),
         const SizedBox(height: 14),
         if (res.isEmpty)
@@ -381,10 +381,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(children: [
                 Icon(Icons.search_off, size: 52, color: Colors.white54),
                 SizedBox(height: 10),
-                Text('Film tidak ditemukan',
+                Text('No movies found',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
                 SizedBox(height: 4),
-                Text('Coba kata kunci lain, misalnya judul atau genre.',
+                Text('Try searching with another keyword, such as title or genre.',
                     style: TextStyle(color: Colors.white70, fontSize: 13)),
               ]),
             ),
@@ -443,7 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
         else ...[
           _section('Now Playing', nowPlaying),
           _section('Coming Soon', comingSoon),
-          _section('Top movies', topMovies),
+          _section('Top Movies', topMovies),
         ],
       ],
     );

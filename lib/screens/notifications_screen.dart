@@ -5,10 +5,10 @@ import '../widgets.dart';
 
 String _ago(DateTime t) {
   final d = DateTime.now().difference(t);
-  if (d.inMinutes < 1) return 'Baru saja';
-  if (d.inMinutes < 60) return '${d.inMinutes} menit lalu';
-  if (d.inHours < 24) return '${d.inHours} jam lalu';
-  return '${d.inDays} hari lalu';
+  if (d.inMinutes < 1) return 'Just now';
+  if (d.inMinutes < 60) return '${d.inMinutes}m ago';
+  if (d.inHours < 24) return '${d.inHours}h ago';
+  return '${d.inDays}d ago';
 }
 
 IconData _icon(String kind) {
@@ -32,7 +32,7 @@ class NotificationsScreen extends StatelessWidget {
       builder: (context, _) {
         final s = AppState.I;
         return SubPage(
-          title: 'Notifikasi',
+          title: 'Notifications',
           trailing: GestureDetector(
             onTap: s.unread == 0 ? null : s.markAllRead,
             child: Container(
@@ -52,8 +52,8 @@ class NotificationsScreen extends StatelessWidget {
             children: [
               Text(
                   s.unread == 0
-                      ? 'Semua sudah dibaca'
-                      : '${s.unread} belum dibaca',
+                      ? 'All caught up'
+                      : '${s.unread} unread',
                   style: const TextStyle(color: Colors.white70, fontSize: 13)),
               const SizedBox(height: 10),
               if (s.notifications.isEmpty)
@@ -64,7 +64,7 @@ class NotificationsScreen extends StatelessWidget {
                       Icon(Icons.notifications_off_outlined,
                           size: 52, color: Colors.white54),
                       SizedBox(height: 10),
-                      Text('Belum ada notifikasi',
+                      Text('No notifications yet',
                           style: TextStyle(
                               fontSize: 17, fontWeight: FontWeight.w600)),
                     ]),

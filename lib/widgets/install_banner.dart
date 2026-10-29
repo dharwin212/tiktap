@@ -20,7 +20,7 @@ class _InstallBannerState extends State<InstallBanner> {
     final ok = await launchUrl(url, webOnlyWindowName: '_self');
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal membuka file APK')));
+          const SnackBar(content: Text('Failed to open APK file')));
     }
   }
 
@@ -39,12 +39,12 @@ class _InstallBannerState extends State<InstallBanner> {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Pakai aplikasi TikTap',
+                  const Text('Get the TikTap App',
                       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   Text(
                       isAndroid
-                          ? 'Install APK agar lebih cepat & bisa offline'
-                          : 'Download APK untuk HP Android',
+                          ? 'Install APK for faster access & offline mode'
+                          : 'Download APK for Android devices',
                       style: const TextStyle(color: Colors.white70, fontSize: 11)),
                 ]),
           ),

@@ -17,18 +17,18 @@ class _HelpScreenState extends State<HelpScreen> {
   bool _typing = false;
 
   static const _quick = [
-    'Tiket tidak muncul',
-    'Pembayaran gagal',
-    'Barcode tidak terbaca',
-    'Refund / batalkan tiket',
-    'Cara pakai voucher',
+    'Ticket not showing',
+    'Payment failed',
+    'Barcode unreadable',
+    'Refund / cancel ticket',
+    'How to use voucher',
   ];
 
   @override
   void initState() {
     super.initState();
     AppState.I.seedChat(
-        'Halo ${AppState.I.username}! Aku TikTap Assistant. Ada kendala apa dengan pesanan atau aplikasinya? Ceritakan saja, atau pilih topik di bawah.');
+        'Hello ${AppState.I.username}! I am TikTap Assistant. How can I help you today with your order or the app? Ask me anything or select a topic below.');
   }
 
   @override
@@ -59,7 +59,7 @@ class _HelpScreenState extends State<HelpScreen> {
       answer = await _agent.reply(t, AppState.I.chat);
     } catch (_) {
       answer =
-          'Maaf, ada gangguan saat menjawab. Coba lagi sebentar atau hubungi $supportEmail.';
+          'Sorry, an error occurred while generating a response. Please try again shortly or contact $supportEmail.';
     }
     AppState.I.addChat(ChatMsg(fromUser: false, text: answer));
     if (!mounted) return;
@@ -97,7 +97,7 @@ class _HelpScreenState extends State<HelpScreen> {
   @override
   Widget build(BuildContext context) {
     return SubPage(
-      title: 'Bantuan',
+      title: 'Help & Support',
       body: Column(children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
@@ -121,7 +121,7 @@ class _HelpScreenState extends State<HelpScreen> {
                   if (i < chat.length) return _bubble(chat[i]);
                   return const Padding(
                     padding: EdgeInsets.only(left: 4, bottom: 10),
-                    child: Text('TikTap Assistant sedang mengetik...',
+                    child: Text('TikTap Assistant is typing...',
                         style: TextStyle(color: Colors.white60, fontSize: 12)),
                   );
                 },
@@ -163,7 +163,7 @@ class _HelpScreenState extends State<HelpScreen> {
                   textInputAction: TextInputAction.send,
                   style: const TextStyle(fontSize: 14),
                   decoration: const InputDecoration(
-                    hintText: 'Tulis kendalamu...',
+                    hintText: 'Type your question here...',
                     hintStyle: TextStyle(color: Colors.white54),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,

@@ -11,7 +11,7 @@ class NavMenuButton extends StatelessWidget {
     ('Order Confirmation', Icons.shopping_bag_outlined),
     ('Mobile Ticket', Icons.confirmation_number_outlined),
     ('History Purchase', Icons.history_rounded),
-    ('Profil', Icons.person_rounded),
+    ('Profile', Icons.person_rounded),
   ];
 
   @override

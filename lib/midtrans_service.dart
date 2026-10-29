@@ -60,15 +60,15 @@ class MidtransService {
             'id': 'ITEM-${orderId.substring(0, orderId.length.clamp(0, 20))}',
             'price': grossAmount,
             'quantity': 1,
-            'name': 'Tiket: $movieTitle ($seatCount kursi)'.substring(
+            'name': 'Ticket: $movieTitle ($seatCount seats)'.substring(
                 0,
                 50.clamp(
-                    0, 'Tiket: $movieTitle ($seatCount kursi)'.length)),
+                    0, 'Ticket: $movieTitle ($seatCount seats)'.length)),
           }
         ],
         'customer_details': {
           'first_name':
-              customerName.isNotEmpty ? customerName : 'Pelanggan TikTap',
+              customerName.isNotEmpty ? customerName : 'TikTap Customer',
           'email': customerEmail.isNotEmpty ? customerEmail : 'guest@tiktap.id',
           'phone': customerPhone.isNotEmpty ? customerPhone : '081234567890',
         },
@@ -129,7 +129,7 @@ class MidtransService {
           token: 'simulated_token_$orderId',
           redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/mock-$orderId',
           isSimulation: true,
-          errorMessage: 'Koneksi ke server Midtrans sedang lambat. Beralih ke Simulator Pembayaran.',
+          errorMessage: 'Connection to payment server is slow. Switched to Payment Simulator.',
         );
       }
 
@@ -186,10 +186,10 @@ class MidtransService {
       }
 
       // Jika response error dari Midtrans
-      String err = 'Gagal membuat transaksi Midtrans (${finalResponse.statusCode})';
+      String err = 'Failed to create Midtrans transaction (${finalResponse.statusCode})';
       if (finalResponse.statusCode == 401) {
         err =
-            'Server Key Midtrans tidak valid atau salah environment (401). Pastikan Server Key Sandbox dari dashboard.midtrans.com sudah benar.';
+            'Invalid Midtrans Server Key or incorrect environment (401). Please check your Sandbox Server Key from dashboard.midtrans.com.';
       }
       try {
         final errJson = jsonDecode(finalResponse.body);
@@ -214,7 +214,7 @@ class MidtransService {
         token: 'simulated_token_$orderId',
         redirectUrl: 'https://app.sandbox.midtrans.com/snap/v2/vtweb/mock-$orderId',
         isSimulation: true,
-        errorMessage: 'Koneksi ke server pembayaran terganggu. Mode simulator diaktifkan.',
+        errorMessage: 'Payment server connection disrupted. Simulator mode activated.',
       );
     }
   }

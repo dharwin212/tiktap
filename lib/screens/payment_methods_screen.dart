@@ -4,21 +4,25 @@ import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-const _types = ['GOPAY', 'OVO', 'DANA', 'ShopeePay', 'Transfer Bank', 'Kartu Kredit'];
+const _types = ['GOPAY', 'OVO', 'DANA', 'ShopeePay', 'Bank Transfer', 'Credit Card'];
 
 IconData _iconFor(String t) {
   if (t.contains('Midtrans') || t.contains('Snap') || t.contains('QRIS')) {
     return Icons.qr_code_scanner_rounded;
   }
-  if (t == 'Transfer Bank' || t.contains('BCA')) return Icons.account_balance_outlined;
-  if (t == 'Kartu Kredit') return Icons.credit_card;
+  if (t.contains('Transfer') || t.contains('Bank') || t.contains('BCA')) {
+    return Icons.account_balance_outlined;
+  }
+  if (t.contains('Card') || t.contains('Kartu') || t.contains('Kredit')) {
+    return Icons.credit_card;
+  }
   return Icons.account_balance_wallet_outlined;
 }
 
 String _labelFor(String t) {
-  if (t == 'Transfer Bank') return 'Nomor rekening';
-  if (t == 'Kartu Kredit') return 'Nomor kartu';
-  return 'Nomor HP $t';
+  if (t.contains('Bank') || t.contains('Transfer')) return 'Bank account number';
+  if (t.contains('Card') || t.contains('Kartu') || t.contains('Kredit')) return 'Card number';
+  return '$t phone number';
 }
 
 class PaymentMethodsScreen extends StatelessWidget {
@@ -44,7 +48,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Center(
-                    child: Text('Tambah metode pembayaran',
+                    child: Text('Add Payment Method',
                         style:
                             TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                   ),
@@ -64,10 +68,10 @@ class PaymentMethodsScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   GlassField(
                     label: _labelFor(type),
-                    hint: type == 'Kartu Kredit'
-                        ? '16 digit nomor kartu'
-                        : type == 'Transfer Bank'
-                            ? 'Nomor rekening'
+                    hint: type.contains('Card') || type.contains('Kartu')
+                        ? '16-digit card number'
+                        : type.contains('Bank') || type.contains('Transfer')
+                            ? 'Bank account number'
                             : '0812xxxxxxxx',
                     icon: _iconFor(type),
                     controller: c,
@@ -82,15 +86,15 @@ class PaymentMethodsScreen extends StatelessWidget {
                     ),
                   const SizedBox(height: 18),
                   GradientButton(
-                    text: 'Simpan',
+                    text: 'Save',
                     onTap: () {
                       final digits = c.text.replaceAll(RegExp(r'\D'), '');
                       final dup = AppState.I.payments
                           .any((m) => m.type == type && m.number == digits);
                       if (digits.length < 8 || digits.length > 19) {
-                        setS(() => err = 'Nomor harus 8-19 digit angka.');
+                        setS(() => err = 'Number must be 8-19 digits.');
                       } else if (dup) {
-                        setS(() => err = 'Metode ini sudah tersimpan.');
+                        setS(() => err = 'This payment method is already saved.');
                       } else {
                         AppState.I.addPayment(PaymentMethod(
                             id: AppState.I.newId('pm'),
@@ -130,17 +134,17 @@ class PaymentMethodsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
-                  child: Text('Ubah Nomor ${m.type}',
+                  child: Text('Edit ${m.type} Number',
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.w600)),
                 ),
                 const SizedBox(height: 16),
                 GlassField(
                   label: _labelFor(m.type),
-                  hint: m.type == 'Kartu Kredit'
-                      ? '16 digit nomor kartu'
-                      : m.type == 'Transfer Bank'
-                          ? 'Nomor rekening'
+                  hint: m.type.contains('Card') || m.type.contains('Kartu')
+                      ? '16-digit card number'
+                      : m.type.contains('Bank') || m.type.contains('Transfer')
+                          ? 'Bank account number'
                           : '0812xxxxxxxx',
                   icon: _iconFor(m.type),
                   controller: c,
@@ -155,18 +159,18 @@ class PaymentMethodsScreen extends StatelessWidget {
                   ),
                 const SizedBox(height: 18),
                 GradientButton(
-                  text: 'Simpan Perubahan',
+                  text: 'Save Changes',
                   onTap: () {
                     final digits = c.text.replaceAll(RegExp(r'\D'), '');
                     if (digits.length < 8 || digits.length > 19) {
-                      setS(() => err = 'Nomor harus 8-19 digit angka.');
+                      setS(() => err = 'Number must be 8-19 digits.');
                     } else {
                       AppState.I.updatePayment(m.id, digits);
                       Navigator.of(ctx).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content:
-                              Text('Nomor ${m.type} berhasil diubah ke $digits'),
+                              Text('${m.type} number updated to $digits'),
                         ),
                       );
                     }
@@ -185,15 +189,15 @@ class PaymentMethodsScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF0D1824),
-        title: const Text('Hapus metode?'),
-        content: Text('${m.label} akan dihapus dari akunmu.'),
+        title: const Text('Delete payment method?'),
+        content: Text('${m.label} will be removed from your account.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Batal')),
+              child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Hapus',
+              child: const Text('Delete',
                   style: TextStyle(color: Colors.redAccent))),
         ],
       ),
@@ -204,7 +208,7 @@ class PaymentMethodsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SubPage(
-      title: 'Metode Pembayaran',
+      title: 'Payment Methods',
       body: ListenableBuilder(
         listenable: AppState.I,
         builder: (context, _) {
@@ -219,17 +223,17 @@ class PaymentMethodsScreen extends StatelessWidget {
                           const Icon(Icons.credit_card_off_outlined,
                               size: 52, color: Colors.white54),
                           const SizedBox(height: 12),
-                          const Text('Belum ada metode pembayaran',
+                          const Text('No payment methods yet',
                               style: TextStyle(
                                   fontSize: 17, fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
-                          const Text('Tambahkan agar checkout lebih cepat.',
+                          const Text('Add a method for faster checkout.',
                               style: TextStyle(color: Colors.white70)),
                           const SizedBox(height: 16),
                           TextButton.icon(
                             icon: const Icon(Icons.refresh, color: AppColors.lightBlue),
                             label: const Text(
-                              'Muat metode default (Midtrans Snap)',
+                              'Load default method (Midtrans Snap)',
                               style: TextStyle(color: AppColors.lightBlue),
                             ),
                             onPressed: () {
@@ -283,7 +287,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                                               color: AppColors.lightBlue.withValues(alpha: 0.2),
                                               borderRadius: BorderRadius.circular(8),
                                             ),
-                                            child: const Text('Utama',
+                                            child: const Text('Default',
                                                 style: TextStyle(
                                                     color: AppColors.lightBlue,
                                                     fontSize: 10)),
@@ -324,7 +328,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                                         Icon(Icons.edit_outlined,
                                             size: 18, color: Colors.white70),
                                         SizedBox(width: 10),
-                                        Text('Ubah nomor'),
+                                        Text('Edit number'),
                                       ])),
                                   if (!isDef)
                                     const PopupMenuItem(
@@ -333,7 +337,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                                           Icon(Icons.check_circle_outline,
                                               size: 18, color: AppColors.lightBlue),
                                           SizedBox(width: 10),
-                                          Text('Jadikan utama'),
+                                          Text('Set as default'),
                                         ])),
                                   const PopupMenuItem(
                                       value: 'delete',
@@ -341,7 +345,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                                         Icon(Icons.delete_outline,
                                             size: 18, color: Colors.redAccent),
                                         SizedBox(width: 10),
-                                        Text('Hapus',
+                                        Text('Delete',
                                             style: TextStyle(color: Colors.redAccent)),
                                       ])),
                                 ],
@@ -355,7 +359,7 @@ class PaymentMethodsScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: GradientButton(
-                  text: 'Tambah metode pembayaran', onTap: () => _add(context)),
+                  text: 'Add payment method', onTap: () => _add(context)),
             ),
           ]);
         },

@@ -24,21 +24,21 @@ class ClaudeHelpAgent implements HelpAgent {
   final _fallback = LocalHelpAgent();
 
   @override
-  String get label => 'Didukung Claude AI';
+  String get label => 'Powered by Claude AI';
 
   static const _system = '''
-Kamu adalah TikTap Assistant, agen bantuan di aplikasi pemesanan tiket bioskop TikTap.
-Jawab dalam bahasa Indonesia, ramah, singkat (maksimal 4 kalimat), dan beri langkah yang jelas.
-Fakta aplikasi (jangan mengarang di luar ini):
-- Alur beli: Choose Movie -> pilih film -> Pilih Kursi -> Lanjut -> tab Order Confirmation -> Confirm Order -> tiket + barcode muncul di tab Mobile Ticket. Riwayat ada di History Purchase.
-- Biaya admin Rp 3.000 per tiket. Voucher: HEMAT5K (potongan Rp 5.000) dan NONTON10 (potongan Rp 10.000), dipilih di Order Confirmation > Use Voucher.
-- Tiket tidak dapat ditukar atau di-refund. Anak usia 2 tahun ke atas wajib membeli tiket.
-- Metode pembayaran: GOPAY, OVO, DANA, ShopeePay, Transfer Bank, Kartu Kredit. Dikelola di Profil > Metode pembayaran atau Order Confirmation > Pay with.
-- Profil (foto, nama, email, nomor HP) diubah di Profil > Edit profil. Foto bisa diunggah dari galeri, dilihat, atau dihapus.
-- Login memakai username atau email + password dari akun yang didaftarkan di Register (akun tersimpan di perangkat), atau lewat tombol Google/Facebook (masih mode simulasi). Username yang belum terdaftar harus registrasi dulu.
-- Lupa password: di layar Login tekan Forgot Password?, isi username/email, lalu pakai kode verifikasi 6 digit (simulasi, ditampilkan di layar) untuk membuat password baru. Hanya untuk akun email, bukan akun Google/Facebook.
-- Tiket dan riwayat pembelian tersimpan per akun di perangkat.
-Kalau masalah tidak bisa diselesaikan dari fakta di atas, arahkan pengguna menghubungi $supportEmail dan minta menyertakan kode tiket. Jangan menjanjikan refund atau tindakan yang tidak ada.
+You are TikTap Assistant, the customer support agent in the TikTap movie ticket booking application.
+Respond in clear, friendly, and concise English (maximum 4 sentences) with actionable steps.
+Application Facts (do not hallucinate beyond these):
+- Booking flow: Choose Movie -> select movie -> Select Seat -> Continue -> Order Confirmation tab -> Confirm Order -> ticket + barcode appears in Mobile Ticket tab. History is located under History Purchase.
+- Admin fee: Rp 3,000 per ticket. Active vouchers: HEMAT5K (Rp 5,000 discount) and NONTON10 (Rp 10,000 discount), selectable in Order Confirmation > Use Voucher.
+- Tickets cannot be exchanged or refunded. Children aged 2 years or older must have their own ticket.
+- Payment methods: Midtrans Snap (QRIS, BCA VA, E-Wallet), GOPAY, OVO, DANA, ShopeePay, Bank Transfer, Credit Card. Managed in Profile > Payment Method.
+- Profile (photo, name, email, phone number) can be edited in Profile > Edit Profile. Photo can be uploaded from gallery, viewed, or deleted.
+- Login accepts username or email with password, or social sign-in (Google / Facebook).
+- Forgot password: tap Forgot Password? on the Login screen, enter username/email, and verify with the 6-digit code sent to email.
+- Tickets and purchase history are persisted per account on the device.
+If an issue cannot be resolved with the facts above, direct the user to contact $supportEmail with their ticket ID. Never promise refunds or unsupported actions.
 ''';
 
   @override
@@ -72,7 +72,7 @@ Kalau masalah tidak bisa diselesaikan dari fakta di atas, arahkan pengguna mengh
             body: jsonEncode({
               'model': _model,
               'max_tokens': 500,
-              'system': '$_system\n\nKonteks pengguna:\n${_context()}',
+              'system': '$_system\n\nUser Context:\n${_context()}',
               'messages': msgs,
             }),
           )
@@ -85,7 +85,7 @@ Kalau masalah tidak bisa diselesaikan dari fakta di atas, arahkan pengguna mengh
           .map((b) => b['text'])
           .join('\n')
           .trim();
-      if (out.isEmpty) throw Exception('kosong');
+      if (out.isEmpty) throw Exception('empty');
       return out;
     } catch (_) {
       // Jaringan/API bermasalah -> tetap dijawab asisten lokal.
@@ -96,9 +96,9 @@ Kalau masalah tidak bisa diselesaikan dari fakta di atas, arahkan pengguna mengh
   String _context() {
     final s = AppState.I;
     final last = s.tickets.isEmpty ? null : s.tickets.first;
-    return 'Nama: ${s.username}. Jumlah tiket dibeli: ${s.tickets.length}. '
-        '${last == null ? 'Belum ada pembelian.' : 'Tiket terakhir: ${last.movie.title}, ${last.date} ${last.time}, kode ${last.id}, bayar ${last.cleanPayment}.'} '
-        'Metode pembayaran tersimpan: ${s.payments.isEmpty ? 'belum ada' : s.payments.map((m) => m.type).join(', ')}.';
+    return 'Name: ${s.username}. Purchased tickets: ${s.tickets.length}. '
+        '${last == null ? 'No purchases yet.' : 'Latest ticket: ${last.movie.title}, ${last.date} ${last.time}, code ${last.id}, payment ${last.cleanPayment}.'} '
+        'Saved payment methods: ${s.payments.isEmpty ? 'none' : s.payments.map((m) => m.type).join(', ')}.';
   }
 }
 
@@ -113,48 +113,48 @@ class _Rule {
 
 class LocalHelpAgent implements HelpAgent {
   @override
-  String get label => 'Asisten otomatis';
+  String get label => 'Automated Assistant';
 
   static final List<_Rule> _rules = [
-    _Rule(['halo', 'hai', ' hi ', 'selamat pagi', 'selamat siang', 'selamat malam'],
-        (s) => 'Halo ${s.username}! Ada kendala apa dengan pesanan atau aplikasinya?'),
-    _Rule(['tiket tidak muncul', 'tiket belum muncul', 'tiket hilang', 'mana tiket', 'tiket saya', 'tiket gak muncul', 'tiket nggak muncul', 'barcode tidak muncul'], (s) {
+    _Rule(['halo', 'hai', 'hello', 'hi', 'good morning', 'good afternoon', 'good evening', 'hey'],
+        (s) => 'Hello ${s.username}! How can I help you today with your booking or the app?'),
+    _Rule(['tiket tidak muncul', 'ticket not showing', 'missing ticket', 'where is my ticket', 'no ticket', 'barcode tidak muncul', 'barcode not showing'], (s) {
       if (s.tickets.isEmpty) {
-        return 'Di akunmu belum ada pembelian yang selesai. Tiket baru muncul setelah kamu menekan Confirm Order di tab Order Confirmation. Kalau pembayaran sudah dilakukan tapi tiket belum ada, kirim bukti bayar ke $supportEmail.';
+        return 'There are no completed purchases on your account yet. Tickets appear after completing payment. If you have already paid, please send your payment proof to $supportEmail.';
       }
       final t = s.tickets.first;
-      return 'Tiketmu ada ${s.tickets.length}. Yang terbaru: ${t.movie.title}, ${t.date} ${t.time} (kode ${t.id}). Buka tab Mobile Ticket (ikon tiket) lalu geser kartunya untuk melihat barcode.';
+      return 'You have ${s.tickets.length} tickets. Most recent: ${t.movie.title}, ${t.date} ${t.time} (Code ${t.id}). Open the Mobile Ticket tab to view your barcode.';
     }),
-    _Rule(['barcode', 'scan', 'tidak terbaca', 'gak kebaca', 'tidak bisa discan', 'qr'], (s) {
-      final code = s.tickets.isEmpty ? '' : ' Kode tiket terbarumu: ${s.tickets.first.id}.';
-      return 'Kalau barcode sulit dipindai: naikkan kecerahan layar ke maksimal, jangan di-zoom, bersihkan layar, dan dekatkan ke scanner tegak lurus. Bila tetap gagal, sebutkan kode tiket ke petugas bioskop.$code';
+    _Rule(['barcode', 'scan', 'tidak terbaca', 'unreadable', 'cannot scan', 'scanner', 'qr'], (s) {
+      final code = s.tickets.isEmpty ? '' : ' Your latest ticket code: ${s.tickets.first.id}.';
+      return 'If the barcode cannot be scanned: increase your screen brightness, keep the screen clean, and hold it steady near the scanner. You can also give the ticket code directly to cinema staff.$code';
     }),
-    _Rule(['pembayaran gagal', 'bayar gagal', 'gagal bayar', 'tidak bisa bayar', 'saldo', 'pembayaran error', 'payment'], (s) {
+    _Rule(['pembayaran gagal', 'payment failed', 'failed payment', 'gagal bayar', 'cannot pay', 'payment error'], (s) {
       final pm = s.defaultPayment;
-      return 'Coba langkah ini: 1) pastikan saldo/limit ${pm?.type ?? 'metode pembayaranmu'} cukup, 2) ganti metode lewat Order Confirmation > Pay with, 3) cek nomor di Profil > Metode pembayaran. Kalau saldo terpotong tapi tiket tidak terbit, kirim bukti ke $supportEmail.';
+      return 'Please try the following: 1) verify that your ${pm?.type ?? 'payment method'} balance is sufficient, 2) choose another payment method or use Midtrans Snap, 3) review payment details in Profile > Payment Method. Contact $supportEmail if your balance was deducted.';
     }),
-    _Rule(['refund', 'batal', 'batalkan', 'cancel', 'tukar', 'ganti jadwal', 'reschedule', 'uang kembali'],
-        (s) => 'Sesuai ketentuan di Order Confirmation, tiket tidak dapat ditukar atau di-refund. Kalau ada kesalahan jam atau kursi, hubungi $supportEmail dengan menyertakan kode tiket agar dicek tim kami.'),
-    _Rule(['voucher', 'promo', 'diskon', 'potongan'],
-        (s) => 'Voucher dipilih di Order Confirmation > Use Voucher. Saat ini ada HEMAT5K (potongan Rp 5.000) dan NONTON10 (potongan Rp 10.000). Total pembayaran otomatis menyesuaikan.'),
-    _Rule(['biaya admin', 'adm fee', 'admin fee', 'biaya layanan', 'kenapa mahal'],
-        (s) => 'Ada biaya admin Rp 3.000 per tiket yang tertera di rincian Order Confirmation, di bawah harga tiket.'),
-    _Rule(['ganti nama', 'ubah nama', 'ganti email', 'ubah email', 'edit profil', 'nomor hp', 'ganti foto', 'foto profil', 'ubah foto', 'avatar'],
-        (s) => 'Buka tab Profil lalu Edit profil. Di sana kamu bisa mengunggah foto serta mengubah nama, email, dan nomor HP, lalu tekan Simpan.'),
-    _Rule(['metode pembayaran', 'tambah gopay', 'tambah ovo', 'tambah dana', 'hapus metode', 'kartu'],
-        (s) => 'Kelola di Profil > Metode pembayaran: tambah (GOPAY, OVO, DANA, ShopeePay, Transfer Bank, Kartu Kredit), jadikan utama, atau hapus. Bisa juga lewat Order Confirmation > Pay with.'),
-    _Rule(['kursi', 'seat', 'tempat duduk'],
-        (s) => 'Di halaman Pilih Kursi, kursi putih transparan tersedia, oranye berarti dipilihmu, dan abu-abu gelap sudah terisi. Kursi terisi tidak bisa dipilih. Kamu bisa memilih lebih dari satu kursi.'),
-    _Rule(['jam tayang', 'jadwal', 'tanggal', 'jam berapa'],
-        (s) => 'Tanggal (hari ini sampai lusa) dan jam tayang dipilih di halaman Pilih Kursi sebelum menekan Lanjut.'),
-    _Rule(['anak', 'umur', 'usia', 'balita', 'bayi'],
-        (s) => 'Anak usia 2 tahun ke atas wajib membeli tiket sendiri, sesuai ketentuan di Order Confirmation.'),
-    _Rule(['lupa password', 'reset password', 'lupa kata sandi', 'ganti password'],
-        (s) => 'Di layar Login tekan Forgot Password?, isi username atau email, lalu masukkan kode verifikasi 6 digit yang muncul di layar dan buat password baru. Fitur ini hanya untuk akun email. Kalau tetap gagal, hubungi $supportEmail.'),
-    _Rule([' cs ', 'customer service', 'admin', 'manusia', 'operator', 'hubungi', 'kontak'],
-        (s) => 'Kamu bisa menghubungi tim kami di $supportEmail. Sertakan nama, kode tiket, dan penjelasan singkat masalahnya.'),
-    _Rule(['terima kasih', 'makasih', 'thanks', 'thank you'],
-        (s) => 'Sama-sama, ${s.username}! Selamat menonton.'),
+    _Rule(['refund', 'batal', 'batalkan', 'cancel', 'exchange', 'tukar', 'reschedule'],
+        (s) => 'As noted during checkout, purchased tickets cannot be exchanged or refunded. For special inquiries, please reach out to $supportEmail with your ticket code.'),
+    _Rule(['voucher', 'promo', 'discount', 'diskon', 'coupon'],
+        (s) => 'You can enter and apply vouchers during Order Confirmation. Available vouchers include HEMAT5K (Rp 5,000 off) and NONTON10 (Rp 10,000 off).'),
+    _Rule(['admin fee', 'biaya admin', 'fee', 'charge'],
+        (s) => 'There is a Rp 3,000 admin fee per ticket, listed in the price breakdown on the Order Confirmation screen.'),
+    _Rule(['edit profile', 'change name', 'change email', 'phone number', 'avatar', 'photo', 'foto profil', 'ubah profil'],
+        (s) => 'Go to the Profile tab and tap Edit Profile. You can update your photo, name, email address, and phone number there.'),
+    _Rule(['metode pembayaran', 'payment method', 'add payment', 'delete payment', 'kartu', 'card'],
+        (s) => 'Manage your methods in Profile > Payment Method. You can add new methods, set your default method, or delete saved ones.'),
+    _Rule(['seat', 'kursi', 'seats', 'tempat duduk'],
+        (s) => 'In the Select Seat screen, white outline seats are available, yellow seats are selected by you, and dark grey seats are already booked. Booked seats cannot be selected.'),
+    _Rule(['schedule', 'showtime', 'jam tayang', 'date', 'jadwal'],
+        (s) => 'You can choose your movie date (Today, Tomorrow, Day After) and showtime on the Select Seat screen before proceeding to payment.'),
+    _Rule(['anak', 'child', 'children', 'age', 'umur'],
+        (s) => 'Children aged 2 years or older require their own ticket, as indicated in Order Confirmation policies.'),
+    _Rule(['forgot password', 'reset password', 'lupa password', 'kata sandi'],
+        (s) => 'Tap "Forgot Password?" on the Login screen, enter your username or email, and submit the 6-digit verification code sent to your email to set a new password.'),
+    _Rule(['cs', 'support', 'human', 'contact', 'customer service', 'hubungi'],
+        (s) => 'You can contact our support team anytime at $supportEmail. Please include your name and ticket code.'),
+    _Rule(['thank you', 'thanks', 'terima kasih', 'makasih'],
+        (s) => 'You are very welcome, ${s.username}! Enjoy your movie!'),
   ];
 
   @override
@@ -174,6 +174,6 @@ class LocalHelpAgent implements HelpAgent {
       }
     }
     if (best != null) return best.answer(AppState.I);
-    return 'Maaf, aku belum paham maksudnya. Coba jelaskan dengan kata lain, misalnya tentang tiket, pembayaran, barcode, voucher, atau refund. Kalau perlu bantuan tim kami: $supportEmail.';
+    return 'I apologize, I didn\'t fully understand your question. Please try rephrasing with topics like tickets, payment, barcode, voucher, or contact our support team at $supportEmail.';
   }
 }

@@ -132,16 +132,16 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF0D1824),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Batalkan Pembayaran?',
+        title: const Text('Cancel Payment?',
             style: TextStyle(fontWeight: FontWeight.w700)),
         content: const Text(
-          'Pesanan kursi film kamu belum selesai dibayar. Yakin ingin keluar?',
+          'Your ticket booking has not been paid yet. Are you sure you want to exit?',
           style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Tetap di sini',
+            child: const Text('Stay here',
                 style: TextStyle(color: Colors.white70)),
           ),
           ElevatedButton(
@@ -151,7 +151,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                   borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Ya, Batalkan',
+            child: const Text('Yes, Cancel',
                 style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -159,7 +159,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
     );
 
     if (ok == true && mounted) {
-      _finishPayment(PaymentStatus.cancelled, 'Dibatalkan oleh Pengguna');
+      _finishPayment(PaymentStatus.cancelled, 'Cancelled by User');
     }
   }
 
@@ -185,7 +185,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Pembayaran TikTap',
+              const Text('TikTap Payment',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               Text(
                 'Order ID: ${widget.orderId}',
@@ -199,7 +199,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
               IconButton(
                 icon: const Icon(Icons.open_in_browser_rounded,
                     color: AppColors.lightBlue, size: 22),
-                tooltip: 'Buka di Browser Luar',
+                tooltip: 'Open in External Browser',
                 onPressed: () => launchUrl(
                   Uri.parse(widget.snapResult.redirectUrl!),
                   mode: LaunchMode.externalApplication,
@@ -269,10 +269,10 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                       const SizedBox(height: 4),
                       Text(
                         _hasError && _errorMessage != null
-                            ? 'Webview tidak dapat memuat halaman Midtrans: $_errorMessage. Beralih ke simulator.'
+                            ? 'Webview could not load Midtrans page: $_errorMessage. Switched to simulator.'
                             : MidtransConfig.isConfigured
-                                ? 'Menampilkan simulator uji coba.'
-                                : 'Server Key Midtrans belum diisi di midtrans_config.dart. Mode simulator aktif agar alur pemesanan tiket tetap dapat diuji secara penuh!',
+                                ? 'Displaying test simulator.'
+                                : 'Midtrans Server Key is not configured. Simulator mode is active so booking can be fully tested!',
                         style: const TextStyle(
                             color: Colors.white70, fontSize: 12, height: 1.35),
                       ),
@@ -297,7 +297,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Film:', style: TextStyle(color: Colors.white60)),
+                    const Text('Movie:', style: TextStyle(color: Colors.white60)),
                     Text(widget.movieTitle,
                         style: const TextStyle(fontWeight: FontWeight.w600)),
                   ],
@@ -306,7 +306,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Kursi:', style: TextStyle(color: Colors.white60)),
+                    const Text('Seats:', style: TextStyle(color: Colors.white60)),
                     Text(widget.seats.join(', '),
                         style: const TextStyle(fontWeight: FontWeight.w600)),
                   ],
@@ -315,7 +315,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total Pembayaran:',
+                    const Text('Total Payment:',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.w700)),
                     Text(
@@ -334,7 +334,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
           const SizedBox(height: 20),
 
           // Pilihan Metode Bayar di Simulator
-          const Text('Pilih Metode Pembayaran:',
+          const Text('Select Payment Method:',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
           const SizedBox(height: 10),
           Row(
@@ -369,7 +369,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'QRIS Standar Pembayaran Nasional',
+                      'QRIS National Payment Standard',
                       style: TextStyle(
                           color: Colors.black87,
                           fontSize: 11,
@@ -382,7 +382,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
             const SizedBox(height: 16),
             const Center(
               child: Text(
-                'Buka BCA Mobile, GoPay, OVO, atau DANA untuk scan QRIS di atas.',
+                'Scan this QRIS code using your mobile banking or e-wallet app.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white60, fontSize: 12),
               ),
@@ -398,7 +398,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Nomor Virtual Account BCA:',
+                  const Text('BCA Virtual Account Number:',
                       style: TextStyle(color: Colors.white60, fontSize: 12)),
                   const SizedBox(height: 6),
                   Row(
@@ -420,7 +420,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                           Clipboard.setData(ClipboardData(text: vaNumber));
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('Nomor VA disalin ke clipboard!')),
+                                content: Text('VA number copied to clipboard!')),
                           );
                         },
                       ),
@@ -428,7 +428,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Batas waktu pembayaran: 15 Menit',
+                    'Payment time limit: 15 Minutes',
                     style: TextStyle(color: AppColors.yellow, fontSize: 12),
                   ),
                 ],
@@ -455,7 +455,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w700)),
                         SizedBox(height: 4),
-                        Text('Aplikasi Gojek akan terbuka otomatis untuk konfirmasi PIN.',
+                        Text('Gojek app will open automatically to confirm PIN.',
                             style:
                                 TextStyle(color: Colors.white60, fontSize: 12)),
                       ],
@@ -470,7 +470,7 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
 
           // Tombol Simulasi Pembayaran Sukses
           GradientButton(
-            text: 'Simulasikan Pembayaran Berhasil',
+            text: 'Simulate Successful Payment',
             onTap: () {
               final methods = ['QRIS', 'BCA Virtual Account', 'GoPay'];
               _finishPayment(PaymentStatus.success,
@@ -481,8 +481,8 @@ class _MidtransSnapScreenState extends State<MidtransSnapScreen> {
           Center(
             child: TextButton(
               onPressed: () => _finishPayment(
-                  PaymentStatus.cancelled, 'Dibatalkan Pengguna'),
-              child: const Text('Batal & Kembali ke Pemesanan',
+                  PaymentStatus.cancelled, 'Cancelled by User'),
+              child: const Text('Cancel & Return to Order',
                   style: TextStyle(color: Colors.white54, fontSize: 13)),
             ),
           ),

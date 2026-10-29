@@ -33,10 +33,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (x == null) return;
       AppState.I.setPhoto(await x.readAsBytes());
       messenger
-          .showSnackBar(const SnackBar(content: Text('Foto profil diperbarui')));
+          .showSnackBar(const SnackBar(content: Text('Profile photo updated')));
     } catch (_) {
       messenger.showSnackBar(const SnackBar(
-          content: Text('Galeri tidak bisa dibuka. Cek izin akses foto.')));
+          content: Text('Unable to open gallery. Please check photo permissions.')));
     }
   }
 
@@ -80,11 +80,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              item(Icons.image_outlined, 'Unggah foto',
+              item(Icons.image_outlined, 'Upload photo',
                   () => _pick(ImageSource.gallery)),
-              item(Icons.visibility_outlined, 'Lihat foto', _viewPhoto),
+              item(Icons.visibility_outlined, 'View photo', _viewPhoto),
               if (AppState.I.photo != null)
-                item(Icons.delete_outline, 'Hapus foto',
+                item(Icons.delete_outline, 'Remove photo',
                     () => AppState.I.setPhoto(null),
                     color: Colors.redAccent),
             ]),
@@ -101,11 +101,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final tel = _phone.text.trim();
     String? err;
     if (name.isEmpty) {
-      err = 'Nama tidak boleh kosong.';
+      err = 'Name cannot be empty.';
     } else if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(mail)) {
-      err = 'Format email belum benar, contoh: budi@gmail.com';
+      err = 'Invalid email format, e.g.: name@example.com';
     } else if (tel.isNotEmpty && !RegExp(r'^\+?[0-9 \-]{8,16}$').hasMatch(tel)) {
-      err = 'Nomor HP harus 8-16 digit.';
+      err = 'Phone number must be 8-16 digits.';
     }
     if (err != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
@@ -119,14 +119,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
     AppState.I.updateProfile(name: name, mail: mail, tel: tel);
-    messenger.showSnackBar(const SnackBar(content: Text('Profil diperbarui')));
+    messenger.showSnackBar(const SnackBar(content: Text('Profile updated')));
     nav.pop();
   }
 
   @override
   Widget build(BuildContext context) {
     return SubPage(
-      title: 'Edit Profil',
+      title: 'Edit Profile',
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         children: [
@@ -157,7 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           Center(
             child: GestureDetector(
               onTap: _photoMenu,
-              child: const Text('Ubah foto',
+              child: const Text('Change photo',
                   style: TextStyle(
                       color: AppColors.lightBlue,
                       fontSize: 16,
@@ -166,8 +166,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           const SizedBox(height: 26),
           GlassField(
-            label: 'Nama',
-            hint: 'Nama kamu',
+            label: 'Full Name',
+            hint: 'Your name',
             icon: Icons.person_outline,
             controller: _name,
             onChanged: (_) => setState(() {}),
@@ -175,19 +175,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const SizedBox(height: 14),
           GlassField(
               label: 'Email',
-              hint: 'nama@email.com',
+              hint: 'name@example.com',
               icon: Icons.mail_outline,
               keyboardType: TextInputType.emailAddress,
               controller: _email),
           const SizedBox(height: 14),
           GlassField(
-              label: 'Nomor HP (opsional)',
-              hint: '0812xxxxxxxx',
+              label: 'Phone Number (optional)',
+              hint: '+62812xxxxxxxx',
               icon: Icons.phone_outlined,
               keyboardType: TextInputType.phone,
               controller: _phone),
           const SizedBox(height: 28),
-          GradientButton(text: 'Simpan', onTap: _save),
+          GradientButton(text: 'Save Changes', onTap: _save),
         ],
       ),
     );

@@ -26,7 +26,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   Future<void> _request() async {
     if (_id.text.trim().isEmpty) {
-      _snack('Isi username atau email dulu');
+      _snack('Please enter username or email first');
       return;
     }
     setState(() => _loading = true);
@@ -44,20 +44,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _email = r.email;
       _code.clear();
     });
-    _snack('Kode verifikasi telah dikirim ke email ${_email ?? ""}');
+    _snack('Verification code sent to ${_email ?? ""}');
   }
 
   Future<void> _reset() async {
     if (_code.text.trim().length < 6) {
-      _snack('Masukkan 6 digit kode verifikasi yang ada di email kamu');
+      _snack('Please enter the 6-digit verification code from your email');
       return;
     }
     if (_pass.text.length < 6) {
-      _snack('Password baru minimal 6 karakter');
+      _snack('New password must be at least 6 characters');
       return;
     }
     if (_pass.text != _pass2.text) {
-      _snack('Konfirmasi password tidak sama');
+      _snack('Password confirmation does not match');
       return;
     }
 
@@ -70,7 +70,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _snack(err);
       return;
     }
-    _snack('Password berhasil diubah. Silakan login.');
+    _snack('Password updated successfully. Please log in.');
     Navigator.of(context).pop();
   }
 
@@ -108,22 +108,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 36),
                 child: Column(children: [
-                  const Text('Lupa Password',
+                  const Text('Forgot Password',
                       style: TextStyle(fontSize: 34, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
                   Text(
                       _step == 0
-                          ? 'Masukkan email atau username akun terdaftarmu'
-                          : 'Cek email kamu dan masukkan kode verifikasi',
+                          ? 'Enter your registered email or username'
+                          : 'Check your email and enter the verification code',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.white, fontSize: 14)),
                   const SizedBox(height: 28),
                   if (_step == 0) ...[
-                    _field('Email / Username', 'nama@email.com atau username',
+                    _field('Email / Username', 'name@example.com or username',
                         Icons.person_outline, _id),
                     const SizedBox(height: 24),
                     GradientButton(
-                      text: _loading ? 'Mengirim email...' : 'Kirim kode ke email',
+                      text: _loading ? 'Sending email...' : 'Send code to email',
                       onTap: _loading ? () {} : _request,
                     ),
                   ] else ...[
@@ -148,7 +148,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Kode Terkirim ke Email!',
+                                  'Code Sent to Email!',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
@@ -157,7 +157,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Kode 6-digit telah dikirimkan ke $_email.\nSilakan cek Kotak Masuk atau folder Spam.',
+                                  'A 6-digit code has been sent to $_email.\nPlease check your Inbox or Spam folder.',
                                   style: const TextStyle(
                                     color: Colors.white70,
                                     fontSize: 12,
@@ -172,16 +172,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     const SizedBox(height: 18),
                     _field(
-                      'Kode Verifikasi',
-                      'Masukkan 6 digit dari email',
+                      'Verification Code',
+                      'Enter 6 digits from email',
                       Icons.pin_outlined,
                       _code,
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 14),
                     _field(
-                      'Password baru',
-                      'Minimal 6 karakter',
+                      'New Password',
+                      'At least 6 characters',
                       Icons.vpn_key_outlined,
                       _pass,
                       obscure: _hide,
@@ -197,20 +197,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                     const SizedBox(height: 14),
                     _field(
-                      'Ulangi password baru',
-                      'Ketik ulang password',
+                      'Confirm New Password',
+                      'Re-enter new password',
                       Icons.lock_outline,
                       _pass2,
                       obscure: _hide,
                     ),
                     const SizedBox(height: 24),
                     GradientButton(
-                      text: _loading ? 'Menyimpan...' : 'Reset password',
+                      text: _loading ? 'Saving...' : 'Reset Password',
                       onTap: _loading ? () {} : _reset,
                     ),
                     TextButton(
                       onPressed: _loading ? null : _request,
-                      child: const Text('Kirim ulang kode ke email',
+                      child: const Text('Resend code to email',
                           style: TextStyle(color: Colors.white)),
                     ),
                   ],

@@ -79,7 +79,7 @@ class _OrderScreenState extends State<OrderScreen> {
               children: [
                 CircularProgressIndicator(color: AppColors.lightBlue),
                 SizedBox(height: 16),
-                Text('Menghubungkan ke Midtrans Snap...',
+                Text('Connecting to Midtrans Snap...',
                     style: TextStyle(color: Colors.white, fontSize: 14)),
               ],
             ),
@@ -112,7 +112,7 @@ class _OrderScreenState extends State<OrderScreen> {
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
               SizedBox(width: 8),
-              Text('Kendala Midtrans Snap', style: TextStyle(fontSize: 16)),
+              Text('Midtrans Snap Notice', style: TextStyle(fontSize: 16)),
             ],
           ),
           content: Column(
@@ -120,12 +120,12 @@ class _OrderScreenState extends State<OrderScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                snapRes.errorMessage ?? 'Gagal membuat transaksi Midtrans.',
+                snapRes.errorMessage ?? 'Failed to create Midtrans transaction.',
                 style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 14),
               const Text(
-                'Kamu tetap dapat melanjutkan pemesanan dengan membuka Simulator Pembayaran.',
+                'You can still proceed with your booking using Payment Simulator.',
                 style: TextStyle(color: AppColors.lightBlue, fontSize: 12),
               ),
             ],
@@ -136,7 +136,7 @@ class _OrderScreenState extends State<OrderScreen> {
                 Navigator.of(ctx).pop(false);
                 MidtransConfig.showSettingsDialog(context);
               },
-              child: const Text('Atur Kunci API',
+              child: const Text('Set API Key',
                   style: TextStyle(color: Colors.white60)),
             ),
             ElevatedButton(
@@ -145,7 +145,7 @@ class _OrderScreenState extends State<OrderScreen> {
                 foregroundColor: const Color(0xFF0D1824),
               ),
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Buka Simulator Pembayaran'),
+              child: const Text('Open Payment Simulator'),
             ),
           ],
         ),
@@ -207,12 +207,12 @@ class _OrderScreenState extends State<OrderScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-              'Menunggu pembayaran diselesaikan. Periksa instruksi pembayaran.'),
+              'Waiting for payment to complete. Please check payment instructions.'),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pembayaran dibatalkan')),
+        const SnackBar(content: Text('Payment cancelled')),
       );
     }
   }
@@ -233,7 +233,7 @@ class _OrderScreenState extends State<OrderScreen> {
     AppState.I.addTicket(t); // -> otomatis pindah ke tab Mobile Ticket
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Pembayaran berhasil ($cleanMethod), tiket siap dipakai!'),
+        content: Text('Payment successful ($cleanMethod), your ticket is ready!'),
         backgroundColor: const Color(0xFF0B6BA8),
       ),
     );
@@ -256,17 +256,17 @@ class _OrderScreenState extends State<OrderScreen> {
                     const Icon(Icons.shopping_bag_outlined,
                         size: 56, color: Colors.white54),
                     const SizedBox(height: 12),
-                    const Text('Belum ada pesanan',
+                    const Text('No orders yet',
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 6),
-                    const Text('Pilih film dan kursi di beranda dulu.',
+                    const Text('Select a movie and seats on the home screen first.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white70)),
                     const SizedBox(height: 20),
                     SizedBox(
                         width: 180,
                         child: GradientButton(
-                            text: 'Pilih film', onTap: () => AppState.I.goTo(0))),
+                            text: 'Choose movie', onTap: () => AppState.I.goTo(0))),
                   ]),
                 ),
               ),

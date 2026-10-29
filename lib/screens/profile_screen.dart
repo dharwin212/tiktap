@@ -90,25 +90,25 @@ class ProfileScreen extends StatelessWidget {
                       style: const TextStyle(color: Colors.white54, fontSize: 12))),
             const SizedBox(height: 22),
             Row(children: [
-              Expanded(child: _stat('${s.tickets.length}', 'Tiket dibeli')),
+              Expanded(child: _stat('${s.tickets.length}', 'Tickets bought')),
               const SizedBox(width: 12),
-              Expanded(child: _stat('${s.active.length}', 'Tiket aktif')),
+              Expanded(child: _stat('${s.active.length}', 'Active tickets')),
             ]),
             const SizedBox(height: 18),
-            _item(Icons.edit_outlined, 'Edit profil',
+            _item(Icons.edit_outlined, 'Edit Profile',
                 onTap: () => _open(context, const EditProfileScreen())),
-            _item(Icons.payment_outlined, 'Metode pembayaran',
+            _item(Icons.payment_outlined, 'Payment Method',
                 sub: pm == null
-                    ? 'Belum ada metode'
-                    : 'Utama: ${pm.label}  (${s.payments.length} tersimpan)',
+                    ? 'No payment method'
+                    : 'Default: ${pm.label}  (${s.payments.length} saved)',
                 onTap: () => _open(context, const PaymentMethodsScreen())),
-            _item(Icons.notifications_none, 'Notifikasi',
+            _item(Icons.notifications_none, 'Notifications',
                 badge: s.unread,
                 onTap: () => _open(context, const NotificationsScreen())),
-            _item(Icons.help_outline, 'Bantuan',
-                sub: 'Tanya TikTap Assistant',
+            _item(Icons.help_outline, 'Help & Support',
+                sub: 'Ask TikTap Assistant',
                 onTap: () => _open(context, const HelpScreen())),
-            _item(Icons.logout, 'Keluar', color: Colors.redAccent, onTap: () async {
+            _item(Icons.logout, 'Log out', color: Colors.redAccent, onTap: () async {
               await AuthService.logout();
               if (!context.mounted) return;
               Navigator.of(context).pushAndRemoveUntil(

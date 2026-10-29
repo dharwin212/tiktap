@@ -50,8 +50,8 @@ Future<void> _finishSocial(BuildContext context, SocialProfile p) async {
   }
   messenger.showSnackBar(SnackBar(
       content: Text(r.isNew
-          ? 'Akun $label baru dibuat. Selamat datang!'
-          : 'Selamat datang kembali!')));
+          ? 'New $label account created. Welcome!'
+          : 'Welcome back!')));
   _enter(context);
 }
 
@@ -63,7 +63,7 @@ Future<void> _social(BuildContext context, String provider) async {
   try {
     p = await SocialAuth.impl.signIn(context, provider);
   } catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text('Login $label gagal: $e')));
+    messenger.showSnackBar(SnackBar(content: Text('$label sign-in failed: $e')));
     return;
   }
   if (p == null || !context.mounted) return; // dibatalkan / halaman dialihkan (web)
@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Login gagal: $e')));
+            .showSnackBar(SnackBar(content: Text('Sign-in failed: $e')));
       }
     }
   }
@@ -151,16 +151,16 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: _sheetColor,
-        title: const Text('Akun belum terdaftar'),
+        title: const Text('Account Not Found'),
         content: Text(
-            '"$id" belum punya akun. Silakan registrasi dulu, atau masuk lewat Google atau Facebook.'),
+            '"$id" does not have an account yet. Please sign up first, or continue with Google or Facebook.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Batal')),
+              child: const Text('Cancel')),
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Register',
+              child: const Text('Sign Up',
                   style: TextStyle(color: AppColors.lightBlue))),
         ],
       ),
@@ -177,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final messenger = ScaffoldMessenger.of(context);
     if (_user.text.trim().isEmpty || _pass.text.isEmpty) {
       messenger.showSnackBar(
-          const SnackBar(content: Text('Isi username dan password dulu')));
+          const SnackBar(content: Text('Please enter username and password first')));
       return;
     }
     final err = await AuthService.login(_user.text, _pass.text);
@@ -210,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 30),
                 _field(
                     label: 'Username',
-                    hint: 'Username atau email',
+                    hint: 'Username or email',
                     icon: Icons.person_outline,
                     controller: _user),
                 const SizedBox(height: 16),
@@ -248,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextButton(
                   onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const RegisterScreen())),
-                  child: const Text('Belum punya akun? Register',
+                  child: const Text('Don\'t have an account? Sign up',
                       style: TextStyle(color: Colors.white)),
                 ),
               ]),
@@ -296,14 +296,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text(
-            'Akun dibuat! Cek email untuk konfirmasi atau matikan "Confirm email" di Supabase.',
+            'Account created! Please check your email to confirm.',
           ),
           duration: Duration(seconds: 4),
         ),
       );
     } else {
       messenger.showSnackBar(
-          const SnackBar(content: Text('Akun berhasil dibuat dan tersimpan')));
+          const SnackBar(content: Text('Account successfully created!')));
     }
     _enter(context);
   }
@@ -332,7 +332,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 36),
                 child: Column(children: [
-                  const Text('Register Akun',
+                  const Text('Create Account',
                       style:
                           TextStyle(fontSize: 36, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 32),

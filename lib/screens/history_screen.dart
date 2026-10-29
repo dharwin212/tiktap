@@ -13,15 +13,15 @@ class HistoryScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF0D1824),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Hapus Semua Riwayat?'),
+        title: const Text('Clear All History?'),
         content: const Text(
-          'Semua riwayat pembelian tiket akan dihapus secara permanen.',
+          'All ticket purchase history will be permanently deleted.',
           style: TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Batal', style: TextStyle(color: Colors.white70)),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -30,7 +30,7 @@ class HistoryScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Hapus Semua', style: TextStyle(color: Colors.white)),
+            child: const Text('Clear All', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -40,7 +40,7 @@ class HistoryScreen extends StatelessWidget {
       AppState.I.clearTickets();
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Riwayat pembelian berhasil dibersihkan')),
+          const SnackBar(content: Text('Purchase history cleared successfully')),
         );
       }
     }
@@ -82,11 +82,11 @@ class HistoryScreen extends StatelessWidget {
                         Icon(Icons.history_rounded,
                             size: 56, color: Colors.white54),
                         SizedBox(height: 12),
-                        Text('Belum ada riwayat pembelian',
+                        Text('No purchase history yet',
                             style:
                                 TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                         SizedBox(height: 6),
-                        Text('Tiket yang kamu beli akan muncul di sini.',
+                        Text('Tickets you purchase will appear here.',
                             style: TextStyle(color: Colors.white70)),
                       ]),
                     ),
@@ -130,7 +130,7 @@ class HistoryScreen extends StatelessWidget {
                                             style: const TextStyle(
                                                 color: AppColors.lightBlue,
                                                 fontWeight: FontWeight.w600)),
-                                        Text(t.isPast ? 'Selesai' : 'Aktif',
+                                        Text(t.isPast ? 'Completed' : 'Active',
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 color: t.isPast

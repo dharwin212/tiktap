@@ -349,14 +349,14 @@ class AuthService {
   static Future<String?> register(String email, String name, String pass) async {
     final key = email.trim().toLowerCase();
     final n = name.replaceAll('@', '').trim();
-    if (!isEmail(key)) return 'Format email belum benar, contoh: budi@gmail.com';
-    if (n.isEmpty) return 'Nama tidak boleh kosong.';
-    if (pass.length < 6) return 'Password minimal 6 karakter.';
+    if (!isEmail(key)) return 'Invalid email format, e.g.: name@example.com';
+    if (n.isEmpty) return 'Name cannot be empty.';
+    if (pass.length < 6) return 'Password must be at least 6 characters.';
 
     // Simpan selalu ke cache lokal agar tidak pernah hilang dari perangkat
     final acc = _load();
     if (_nameTaken(acc, n, exceptEmail: key)) {
-      return 'Nama "$n" sudah dipakai. Coba nama lain.';
+      return 'The name "$n" is already taken. Try another name.';
     }
     final salt = _salt();
     acc[key] = {
@@ -411,7 +411,7 @@ class AuthService {
       } on AuthException catch (e) {
         if (e.message.toLowerCase().contains('already registered') ||
             e.message.toLowerCase().contains('exists')) {
-          return 'Email ini sudah terdaftar. Silakan login.';
+          return 'This email is already registered. Please log in.';
         }
         _startSession(acc[key]!);
         return null;
@@ -512,7 +512,7 @@ class AuthService {
           final msg = e.message.toLowerCase();
           if (msg.contains('invalid login credentials') ||
               msg.contains('invalid credentials')) {
-            return 'Password salah atau akun belum terdaftar.';
+            return 'Incorrect password or account not found.';
           }
           if (msg.contains('email not confirmed')) {
             // Cek apakah ada akun lokal yang cocok di perangkat ini
@@ -522,7 +522,7 @@ class AuthService {
               _startSession(localAcc);
               return null; // Pengguna bisa langsung masuk
             }
-            return 'Email belum dikonfirmasi di Supabase. Buka email ($email) untuk verifikasi, atau matikan opsi "Confirm email" di Dashboard Supabase.';
+            return 'Email has not been confirmed yet. Please check your inbox ($email) or disable email confirmation in Supabase dashboard.';
           }
           return e.message;
         }
@@ -542,9 +542,9 @@ class AuthService {
     if (a == null) return kAccountNotFound;
     if (a['provider'] != 'email') {
       final p = _providerName(a['provider']);
-      return 'Akun ini dibuat lewat $p. Masuk dengan tombol $p.';
+      return 'This account was created via $p. Please sign in with $p.';
     }
-    if (a['hash'] != _hash(a['salt'], pass)) return 'Password salah.';
+    if (a['hash'] != _hash(a['salt'], pass)) return 'Incorrect password.';
     _startSession(a);
     return null;
   }
@@ -568,7 +568,7 @@ class AuthService {
       {String? photoUrl}) async {
     final key = email.trim().toLowerCase();
     final n = name.replaceAll('@', '').trim();
-    if (!isEmail(key)) return (error: 'Format email belum benar.', isNew: false);
+    if (!isEmail(key)) return (error: 'Invalid email format.', isNew: false);
 
     // 1. Simpan/Sinkronisasi ke Database Supabase bila terhubung
     if (SupabaseConfig.isConfigured) {
@@ -607,7 +607,7 @@ class AuthService {
       if (existing['provider'] != provider) {
         return (
           error:
-              'Email ini sudah terdaftar lewat ${_providerName(existing['provider'])}. Masuk dengan cara tersebut.',
+              'This email is already registered via ${_providerName(existing['provider'])}. Please sign in using that method.',
           isNew: false
         );
       }
@@ -615,7 +615,7 @@ class AuthService {
       return (error: null, isNew: false);
     }
 
-    if (n.isEmpty) return (error: 'Isi nama untuk akun baru.', isNew: false);
+    if (n.isEmpty) return (error: 'Please enter a name for the new account.', isNew: false);
     var uname = n;
     var i = 2;
     while (_nameTaken(acc, uname)) {
@@ -647,7 +647,7 @@ class AuthService {
           }).eq('id', user.id);
           return null;
         } catch (e) {
-          return 'Gagal memperbarui profil di database: $e';
+          return 'Failed to update profile: $e';
         }
       }
     }
@@ -657,9 +657,9 @@ class AuthService {
     final cur = AppState.I.email.toLowerCase();
     final a = acc[cur];
     if (a == null) return null;
-    if (_nameTaken(acc, name, exceptEmail: cur)) return 'Nama "$name" sudah dipakai.';
+    if (_nameTaken(acc, name, exceptEmail: cur)) return 'The name "$name" is already taken.';
     if (newKey != cur && acc.containsKey(newKey)) {
-      return 'Email itu sudah dipakai akun lain.';
+      return 'This email is already used by another account.';
     }
     a['name'] = name;
     a['email'] = newKey;
@@ -701,7 +701,7 @@ class AuthService {
 
           if (row == null) {
             return (
-              error: 'Akun dengan username "$id" tidak ditemukan.',
+              error: 'Account with username "$id" not found.',
               email: null,
             );
           }
@@ -719,7 +719,7 @@ class AuthService {
       } on AuthException catch (e) {
         return (error: e.message, email: null);
       } catch (e) {
-        return (error: 'Gagal mengirim email verifikasi: $e', email: null);
+        return (error: 'Failed to send verification email: $e', email: null);
       }
     }
 
@@ -733,7 +733,7 @@ class AuthService {
     }
     if (a == null) {
       return (
-        error: 'Akun tidak ditemukan. Periksa username/email atau daftar dulu.',
+        error: 'Account not found. Please check your username/email or sign up.',
         email: null,
       );
     }
@@ -741,7 +741,7 @@ class AuthService {
       final p = _providerName(a['provider']);
       return (
         error:
-            'Akun ini dibuat lewat $p dan tidak memakai password. Masuk dengan tombol $p.',
+            'This account was created via $p and does not use a password. Please sign in with $p.',
         email: null,
       );
     }
@@ -754,7 +754,7 @@ class AuthService {
     // Kode dikirim ke email (pada mode lokal dicatat di debug console sistem, BUKAN di layar)
     debugPrint(
         '================================================================');
-    debugPrint(' [KIRIM EMAIL] Kode verifikasi reset password untuk $email: $code');
+    debugPrint(' [SEND EMAIL] Password reset verification code for $email: $code');
     debugPrint(
         '================================================================');
 
@@ -764,7 +764,7 @@ class AuthService {
   /// Mengganti password baru bila kode verifikasi dari email valid.
   static Future<String?> resetPassword(
       String email, String code, String newPass) async {
-    if (newPass.length < 6) return 'Password minimal 6 karakter.';
+    if (newPass.length < 6) return 'Password must be at least 6 characters.';
 
     // 1. Verifikasi dengan Supabase
     if (SupabaseConfig.isConfigured) {
@@ -777,7 +777,7 @@ class AuthService {
         );
 
         if (res.session == null) {
-          return 'Kode verifikasi salah atau sudah kedaluwarsa.';
+          return 'Verification code is incorrect or expired.';
         }
 
         // Perbarui password pengguna di database
@@ -788,29 +788,29 @@ class AuthService {
       } on AuthException catch (e) {
         return e.message;
       } catch (e) {
-        return 'Gagal mereset password: $e';
+        return 'Failed to reset password: $e';
       }
     }
 
     // 2. Verifikasi Mode Lokal
     final e = _resets[email];
-    if (e == null) return 'Minta kode verifikasi dulu.';
+    if (e == null) return 'Please request a verification code first.';
     if (DateTime.now().isAfter(e.exp)) {
       _resets.remove(email);
-      return 'Kode sudah kedaluwarsa. Minta kode baru.';
+      return 'Code has expired. Please request a new one.';
     }
     if (e.tries >= 5) {
       _resets.remove(email);
-      return 'Terlalu banyak percobaan salah. Minta kode baru.';
+      return 'Too many failed attempts. Please request a new code.';
     }
     if (code.trim() != e.code) {
       e.tries++;
-      return 'Kode salah. Sisa percobaan ${5 - e.tries}.';
+      return 'Incorrect code. ${5 - e.tries} attempts remaining.';
     }
 
     final acc = _load();
     final a = acc[email];
-    if (a == null) return 'Akun tidak ditemukan.';
+    if (a == null) return 'Account not found.';
     final salt = _salt();
     a['salt'] = salt;
     a['hash'] = _hash(salt, newPass);
