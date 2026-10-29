@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../midtrans_config.dart';
 import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
@@ -276,10 +275,6 @@ class PaymentMethodsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SubPage(
       title: 'Payment Methods',
-      trailing: RoundIconButton(
-        icon: Icons.tune,
-        onTap: () => MidtransConfig.showSettingsDialog(context),
-      ),
       body: ListenableBuilder(
         listenable: AppState.I,
         builder: (context, _) {
