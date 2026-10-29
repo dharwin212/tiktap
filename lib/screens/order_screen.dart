@@ -18,7 +18,6 @@ class OrderScreen extends StatefulWidget {
 }
 
 class _OrderScreenState extends State<OrderScreen> {
-
   Widget _kv(String a, String b, {bool bold = false}) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -63,148 +62,149 @@ class _OrderScreenState extends State<OrderScreen> {
 
   Future<void> _confirm(Order o, int total) async {
     final id = 'TT${DateTime.now().millisecondsSinceEpoch % 100000000}';
-      // 1. Tampilkan dialog loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(
-          child: Card(
-            color: Color(0xFF0D1824),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(16))),
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(color: AppColors.lightBlue),
-                  SizedBox(height: 16),
-                  Text('Menghubungkan ke Midtrans Snap...',
-                      style: TextStyle(color: Colors.white, fontSize: 14)),
-                ],
-              ),
+
+    // 1. Tampilkan dialog loading
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: Card(
+          color: Color(0xFF0D1824),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(16))),
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: AppColors.lightBlue),
+                SizedBox(height: 16),
+                Text('Menghubungkan ke Midtrans Snap...',
+                    style: TextStyle(color: Colors.white, fontSize: 14)),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    );
 
-      final snapRes = await MidtransService.createTransaction(
-        orderId: id,
-        grossAmount: total,
-        movieTitle: o.movie.title,
-        seatCount: o.seats.length,
-        customerName: AppState.I.username,
-        customerEmail: AppState.I.email,
-        customerPhone: AppState.I.phone,
-      );
+    final snapRes = await MidtransService.createTransaction(
+      orderId: id,
+      grossAmount: total,
+      movieTitle: o.movie.title,
+      seatCount: o.seats.length,
+      customerName: AppState.I.username,
+      customerEmail: AppState.I.email,
+      customerPhone: AppState.I.phone,
+    );
 
-      if (!mounted) return;
-      Navigator.of(context, rootNavigator: true).pop(); // Tutup loading
+    if (!mounted) return;
+    Navigator.of(context, rootNavigator: true).pop(); // Tutup loading
 
-      if (!snapRes.success) {
-        final useSimulator = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF0D1824),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
-                SizedBox(width: 8),
-                Text('Kendala Midtrans Snap', style: TextStyle(fontSize: 16)),
-              ],
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  snapRes.errorMessage ?? 'Gagal membuat transaksi Midtrans.',
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  'Kamu tetap dapat melanjutkan pemesanan dengan membuka Simulator Pembayaran.',
-                  style: TextStyle(color: AppColors.lightBlue, fontSize: 12),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop(false);
-                  MidtransConfig.showSettingsDialog(context);
-                },
-                child: const Text('Atur Kunci API',
-                    style: TextStyle(color: Colors.white60)),
+    if (!snapRes.success) {
+      final useSimulator = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF0D1824),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+              SizedBox(width: 8),
+              Text('Kendala Midtrans Snap', style: TextStyle(fontSize: 16)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                snapRes.errorMessage ?? 'Gagal membuat transaksi Midtrans.',
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.lightBlue,
-                  foregroundColor: const Color(0xFF0D1824),
-                ),
-                onPressed: () => Navigator.of(ctx).pop(true),
-                child: const Text('Buka Simulator Pembayaran'),
+              const SizedBox(height: 14),
+              const Text(
+                'Kamu tetap dapat melanjutkan pemesanan dengan membuka Simulator Pembayaran.',
+                style: TextStyle(color: AppColors.lightBlue, fontSize: 12),
               ),
             ],
           ),
-        );
-
-        if (useSimulator == true && mounted) {
-          final simRes = SnapTransactionResult(
-            success: true,
-            orderId: id,
-            isSimulation: true,
-          );
-          final res = await Navigator.of(context).push<PaymentResult>(
-            MaterialPageRoute(
-              builder: (_) => MidtransSnapScreen(
-                orderId: id,
-                totalAmount: total,
-                movieTitle: o.movie.title,
-                seats: o.seats,
-                snapResult: simRes,
-              ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop(false);
+                MidtransConfig.showSettingsDialog(context);
+              },
+              child: const Text('Atur Kunci API',
+                  style: TextStyle(color: Colors.white60)),
             ),
-          );
-          if (!mounted) return;
-          if (res != null && res.status == PaymentStatus.success) {
-            _onSuccess(id, o, total, res.method);
-          }
-        }
-        return;
-      }
-
-      // 2. Buka WebView Pop-up Midtrans Snap
-      final res = await Navigator.of(context).push<PaymentResult>(
-        MaterialPageRoute(
-          builder: (_) => MidtransSnapScreen(
-            orderId: id,
-            totalAmount: total,
-            movieTitle: o.movie.title,
-            seats: o.seats,
-            snapResult: snapRes,
-          ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.lightBlue,
+                foregroundColor: const Color(0xFF0D1824),
+              ),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Buka Simulator Pembayaran'),
+            ),
+          ],
         ),
       );
 
-      if (!mounted) return;
-
-      if (res != null && res.status == PaymentStatus.success) {
-        _onSuccess(id, o, total, res.method);
-      } else if (res?.status == PaymentStatus.pending) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Menunggu pembayaran diselesaikan. Periksa instruksi pembayaran.'),
+      if (useSimulator == true && mounted) {
+        final simRes = SnapTransactionResult(
+          success: true,
+          orderId: id,
+          isSimulation: true,
+        );
+        final res = await Navigator.of(context).push<PaymentResult>(
+          MaterialPageRoute(
+            builder: (_) => MidtransSnapScreen(
+              orderId: id,
+              totalAmount: total,
+              movieTitle: o.movie.title,
+              seats: o.seats,
+              snapResult: simRes,
+            ),
           ),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Pembayaran dibatalkan')),
-        );
+        if (!mounted) return;
+        if (res != null && res.status == PaymentStatus.success) {
+          _onSuccess(id, o, total, res.method);
+        }
       }
+      return;
+    }
+
+    // 2. Buka WebView Pop-up Midtrans Snap
+    final res = await Navigator.of(context).push<PaymentResult>(
+      MaterialPageRoute(
+        builder: (_) => MidtransSnapScreen(
+          orderId: id,
+          totalAmount: total,
+          movieTitle: o.movie.title,
+          seats: o.seats,
+          snapResult: snapRes,
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (res != null && res.status == PaymentStatus.success) {
+      _onSuccess(id, o, total, res.method);
+    } else if (res?.status == PaymentStatus.pending) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Menunggu pembayaran diselesaikan. Periksa instruksi pembayaran.'),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pembayaran dibatalkan')),
+      );
+    }
   }
 
   void _onSuccess(String id, Order o, int total, String method) {
