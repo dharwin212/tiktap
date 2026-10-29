@@ -21,7 +21,6 @@ class _HelpScreenState extends State<HelpScreen> {
     'Payment failed',
     'Barcode unreadable',
     'Refund / cancel ticket',
-    'How to use voucher',
   ];
 
   @override

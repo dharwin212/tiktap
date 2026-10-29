@@ -31,7 +31,7 @@ You are TikTap Assistant, the customer support agent in the TikTap movie ticket 
 Respond in clear, friendly, and concise English (maximum 4 sentences) with actionable steps.
 Application Facts (do not hallucinate beyond these):
 - Booking flow: Choose Movie -> select movie -> Select Seat -> Continue -> Order Confirmation tab -> Confirm Order -> ticket + barcode appears in Mobile Ticket tab. History is located under History Purchase.
-- Admin fee: Rp 3,000 per ticket. Active vouchers: HEMAT5K (Rp 5,000 discount) and NONTON10 (Rp 10,000 discount), selectable in Order Confirmation > Use Voucher.
+- Admin fee: Rp 3,000 per ticket. Best prices are automatically applied to each movie ticket.
 - Tickets cannot be exchanged or refunded. Children aged 2 years or older must have their own ticket.
 - Payment methods: Midtrans Snap (QRIS, BCA VA, E-Wallet), GOPAY, OVO, DANA, ShopeePay, Bank Transfer, Credit Card. Managed in Profile > Payment Method.
 - Profile (photo, name, email, phone number) can be edited in Profile > Edit Profile. Photo can be uploaded from gallery, viewed, or deleted.
@@ -136,7 +136,7 @@ class LocalHelpAgent implements HelpAgent {
     _Rule(['refund', 'batal', 'batalkan', 'cancel', 'exchange', 'tukar', 'reschedule'],
         (s) => 'As noted during checkout, purchased tickets cannot be exchanged or refunded. For special inquiries, please reach out to $supportEmail with your ticket code.'),
     _Rule(['voucher', 'promo', 'discount', 'diskon', 'coupon'],
-        (s) => 'You can enter and apply vouchers during Order Confirmation. Available vouchers include HEMAT5K (Rp 5,000 off) and NONTON10 (Rp 10,000 off).'),
+        (s) => 'Promotional prices and discounts are already directly applied to the movie ticket prices shown in the app.'),
     _Rule(['admin fee', 'biaya admin', 'fee', 'charge'],
         (s) => 'There is a Rp 3,000 admin fee per ticket, listed in the price breakdown on the Order Confirmation screen.'),
     _Rule(['edit profile', 'change name', 'change email', 'phone number', 'avatar', 'photo', 'foto profil', 'ubah profil'],
@@ -174,6 +174,6 @@ class LocalHelpAgent implements HelpAgent {
       }
     }
     if (best != null) return best.answer(AppState.I);
-    return 'I apologize, I didn\'t fully understand your question. Please try rephrasing with topics like tickets, payment, barcode, voucher, or contact our support team at $supportEmail.';
+    return 'I apologize, I didn\'t fully understand your question. Please try rephrasing with topics like tickets, payment, barcode, or contact our support team at $supportEmail.';
   }
 }

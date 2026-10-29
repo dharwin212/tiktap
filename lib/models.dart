@@ -445,7 +445,7 @@ class AppState extends ChangeNotifier {
     _push('Welcome to TikTap',
         'Hello $username! Choose your favorite movie and book your tickets now.', 'info');
     _push('Special offer for you',
-        'Use voucher HEMAT5K or NONTON10 during Order Confirmation.', 'promo');
+        'Enjoy the best ticket prices and instant seat booking on TikTap XXI.', 'promo');
     notifyListeners();
   }
 
