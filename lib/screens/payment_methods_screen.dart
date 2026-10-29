@@ -4,8 +4,6 @@ import '../models.dart';
 import '../theme.dart';
 import '../widgets.dart';
 
-const _types = ['GOPAY', 'OVO', 'DANA', 'ShopeePay', 'Bank Transfer', 'Credit Card'];
-
 IconData _iconFor(String t) {
   if (t.contains('Midtrans') || t.contains('Snap') || t.contains('QRIS')) {
     return Icons.qr_code_scanner_rounded;
@@ -19,103 +17,183 @@ IconData _iconFor(String t) {
   return Icons.account_balance_wallet_outlined;
 }
 
-String _labelFor(String t) {
-  if (t.contains('Bank') || t.contains('Transfer')) return 'Bank account number';
-  if (t.contains('Card') || t.contains('Kartu') || t.contains('Kredit')) return 'Card number';
-  return '$t phone number';
-}
-
 class PaymentMethodsScreen extends StatelessWidget {
   const PaymentMethodsScreen({super.key});
 
-  void _add(BuildContext context) {
-    var type = _types.first;
-    final c = TextEditingController();
-    String? err;
+  Widget _channelTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.lightBlue, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13)),
+                const SizedBox(height: 2),
+                Text(subtitle,
+                    style: const TextStyle(color: Colors.white60, fontSize: 11)),
+              ],
+            ),
+          ),
+          const Icon(Icons.check_circle_outline,
+              color: Colors.greenAccent, size: 16),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentInfo(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF0D1824),
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) => Padding(
-          padding: EdgeInsets.fromLTRB(
-              20, 20, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
-          child: SingleChildScrollView(
-            child: Column(
-                mainAxisSize: MainAxisSize.min,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBlue.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.verified_user_rounded,
+                      color: AppColors.lightBlue, size: 28),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Payment Methods',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w700)),
+                      SizedBox(height: 4),
+                      Text('Integrated via Midtrans Snap',
+                          style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.greenAccent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: Colors.greenAccent.withValues(alpha: 0.4)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle,
+                          size: 12, color: Colors.greenAccent),
+                      SizedBox(width: 4),
+                      Text('Active',
+                          style: TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.lightBlue.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                    color: AppColors.lightBlue.withValues(alpha: 0.2)),
+              ),
+              child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Center(
-                    child: Text('Add Payment Method',
-                        style:
-                            TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(spacing: 8, runSpacing: 8, children: [
-                    for (final t in _types)
-                      ChoiceChip(
-                        label: Text(t),
-                        selected: type == t,
-                        onSelected: (_) => setS(() => type = t),
-                        selectedColor: AppColors.lightBlue,
-                        labelStyle: TextStyle(
-                            color: type == t ? const Color(0xFF0B2A48) : Colors.white,
-                            fontSize: 12),
-                      ),
-                  ]),
-                  const SizedBox(height: 16),
-                  GlassField(
-                    label: _labelFor(type),
-                    hint: type.contains('Card') || type.contains('Kartu')
-                        ? '16-digit card number'
-                        : type.contains('Bank') || type.contains('Transfer')
-                            ? 'Bank account number'
-                            : '0812xxxxxxxx',
-                    icon: _iconFor(type),
-                    controller: c,
-                    keyboardType: TextInputType.number,
-                  ),
-                  if (err != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(err!,
-                          style: const TextStyle(
-                              color: Colors.redAccent, fontSize: 12)),
+                  Icon(Icons.info_outline,
+                      color: AppColors.lightBlue, size: 20),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'All payment methods are ready to use! There is no need to manually enter phone or card numbers. When confirming your order, choose any channel directly on the secure Midtrans screen.',
+                      style: TextStyle(
+                          color: Colors.white70, fontSize: 13, height: 1.4),
                     ),
-                  const SizedBox(height: 18),
-                  GradientButton(
-                    text: 'Save',
-                    onTap: () {
-                      final digits = c.text.replaceAll(RegExp(r'\D'), '');
-                      final dup = AppState.I.payments
-                          .any((m) => m.type == type && m.number == digits);
-                      if (digits.length < 8 || digits.length > 19) {
-                        setS(() => err = 'Number must be 8-19 digits.');
-                      } else if (dup) {
-                        setS(() => err = 'This payment method is already saved.');
-                      } else {
-                        AppState.I.addPayment(PaymentMethod(
-                            id: AppState.I.newId('pm'),
-                            type: type,
-                            number: digits));
-                        Navigator.of(ctx).pop();
-                      }
-                    },
                   ),
-                ]),
-          ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text('Supported Channels at Checkout:',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 10),
+            _channelTile(
+              icon: Icons.qr_code_2_rounded,
+              title: 'QRIS',
+              subtitle: 'GoPay, OVO, DANA, ShopeePay, BCA & Mobile Banking',
+            ),
+            const SizedBox(height: 8),
+            _channelTile(
+              icon: Icons.account_balance_outlined,
+              title: 'Virtual Account',
+              subtitle: 'BCA, Mandiri, BNI, BRI, Permata',
+            ),
+            const SizedBox(height: 8),
+            _channelTile(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'E-Wallets',
+              subtitle: 'GoPay, ShopeePay direct link',
+            ),
+            const SizedBox(height: 8),
+            _channelTile(
+              icon: Icons.credit_card,
+              title: 'Credit / Debit Card',
+              subtitle: 'Visa, MasterCard, JCB',
+            ),
+            const SizedBox(height: 20),
+            GradientButton(
+              text: 'Got it',
+              onTap: () => Navigator.of(ctx).pop(),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _edit(BuildContext context, PaymentMethod m) {
-    if (m.id == 'pm_midtrans' || m.type.contains('Midtrans')) {
-      MidtransConfig.showSettingsDialog(context);
-      return;
-    }
+  void _editCustomMethod(BuildContext context, PaymentMethod m) {
     final c = TextEditingController(text: m.number);
     String? err;
     showModalBottomSheet(
@@ -134,21 +212,16 @@ class PaymentMethodsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
-                  child: Text('Edit ${m.type} Number',
+                  child: Text('Edit ${m.type}',
                       style: const TextStyle(
                           fontSize: 18, fontWeight: FontWeight.w600)),
                 ),
                 const SizedBox(height: 16),
                 GlassField(
-                  label: _labelFor(m.type),
-                  hint: m.type.contains('Card') || m.type.contains('Kartu')
-                      ? '16-digit card number'
-                      : m.type.contains('Bank') || m.type.contains('Transfer')
-                          ? 'Bank account number'
-                          : '0812xxxxxxxx',
+                  label: '${m.type} detail',
+                  hint: 'Enter account detail',
                   icon: _iconFor(m.type),
                   controller: c,
-                  keyboardType: TextInputType.number,
                 ),
                 if (err != null)
                   Padding(
@@ -162,17 +235,11 @@ class PaymentMethodsScreen extends StatelessWidget {
                   text: 'Save Changes',
                   onTap: () {
                     final digits = c.text.replaceAll(RegExp(r'\D'), '');
-                    if (digits.length < 8 || digits.length > 19) {
-                      setS(() => err = 'Number must be 8-19 digits.');
+                    if (digits.length < 4) {
+                      setS(() => err = 'Please enter valid details.');
                     } else {
                       AppState.I.updatePayment(m.id, digits);
                       Navigator.of(ctx).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('${m.type} number updated to $digits'),
-                        ),
-                      );
                     }
                   },
                 ),
@@ -209,159 +276,198 @@ class PaymentMethodsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SubPage(
       title: 'Payment Methods',
+      trailing: RoundIconButton(
+        icon: Icons.tune,
+        onTap: () => MidtransConfig.showSettingsDialog(context),
+      ),
       body: ListenableBuilder(
         listenable: AppState.I,
         builder: (context, _) {
           final list = AppState.I.payments;
-          return Column(children: [
-            Expanded(
-              child: list.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.credit_card_off_outlined,
-                              size: 52, color: Colors.white54),
-                          const SizedBox(height: 12),
-                          const Text('No payment methods yet',
-                              style: TextStyle(
-                                  fontSize: 17, fontWeight: FontWeight.w600)),
-                          const SizedBox(height: 4),
-                          const Text('Add a method for faster checkout.',
-                              style: TextStyle(color: Colors.white70)),
-                          const SizedBox(height: 16),
-                          TextButton.icon(
-                            icon: const Icon(Icons.refresh, color: AppColors.lightBlue),
-                            label: const Text(
-                              'Load default method (Midtrans Snap)',
-                              style: TextStyle(color: AppColors.lightBlue),
-                            ),
-                            onPressed: () {
-                              AppState.I.payments =
-                                  List.of(defaultPaymentMethods());
-                              AppState.I.defaultPaymentId =
-                                  AppState.I.payments.first.id;
-                              AppState.I.onPaymentsChanged?.call(
-                                  AppState.I.email,
-                                  AppState.I.payments,
-                                  AppState.I.defaultPaymentId);
-                            },
-                          ),
-                        ]),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) {
-                        final m = list[i];
-                        final isDef = m.id == AppState.I.defaultPayment?.id;
-                        return GestureDetector(
-                          onTap: () => _edit(context, m),
+          return Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  children: [
+                    const Text(
+                      'Primary Payment Gateway',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70),
+                    ),
+                    const SizedBox(height: 10),
+                    for (final m in list)
+                      if (m.id == 'pm_midtrans' || m.type.contains('Midtrans'))
+                        GestureDetector(
+                          onTap: () => _showPaymentInfo(context),
                           child: GlassBox(
-                            padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
+                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                             radius: 16,
-                            child: Row(children: [
-                              Icon(_iconFor(m.type), color: AppColors.lightBlue),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.lightBlue
+                                        .withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.qr_code_scanner_rounded,
+                                    color: AppColors.lightBlue,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Row(children: [
-                                        Expanded(
-                                          child: Text(m.type,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 15)),
-                                        ),
-                                        if (isDef) ...[
+                                      Row(
+                                        children: [
+                                          Text(
+                                            m.type,
+                                            style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 15),
+                                          ),
                                           const SizedBox(width: 8),
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: AppColors.lightBlue.withValues(alpha: 0.2),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: AppColors.lightBlue
+                                                  .withValues(alpha: 0.2),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: const Text('Default',
                                                 style: TextStyle(
                                                     color: AppColors.lightBlue,
-                                                    fontSize: 10)),
+                                                    fontSize: 10,
+                                                    fontWeight:
+                                                        FontWeight.w600)),
                                           ),
                                         ],
-                                      ]),
-                                      const SizedBox(height: 2),
-                                      Row(children: [
-                                        Expanded(
-                                          child: Text(m.masked,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  color: Colors.white70, fontSize: 13)),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        const Icon(Icons.edit_outlined,
-                                            size: 14, color: AppColors.lightBlue),
-                                      ]),
-                                    ]),
-                              ),
-                              PopupMenuButton<String>(
-                                color: const Color(0xFF0D1824),
-                                icon: const Icon(Icons.more_vert, color: Colors.white70),
-                                onSelected: (v) {
-                                  if (v == 'edit') {
-                                    _edit(context, m);
-                                  } else if (v == 'default') {
-                                    AppState.I.setDefaultPayment(m.id);
-                                  } else {
-                                    _confirmDelete(context, m);
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                  const PopupMenuItem(
-                                      value: 'edit',
-                                      child: Row(children: [
-                                        Icon(Icons.edit_outlined,
-                                            size: 18, color: Colors.white70),
-                                        SizedBox(width: 10),
-                                        Text('Edit number'),
-                                      ])),
-                                  if (!isDef)
-                                    const PopupMenuItem(
-                                        value: 'default',
-                                        child: Row(children: [
-                                          Icon(Icons.check_circle_outline,
-                                              size: 18, color: AppColors.lightBlue),
-                                          SizedBox(width: 10),
-                                          Text('Set as default'),
-                                        ])),
-                                  const PopupMenuItem(
-                                      value: 'delete',
-                                      child: Row(children: [
-                                        Icon(Icons.delete_outline,
-                                            size: 18, color: Colors.redAccent),
-                                        SizedBox(width: 10),
-                                        Text('Delete',
-                                            style: TextStyle(color: Colors.redAccent)),
-                                      ])),
-                                ],
-                              ),
-                            ]),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      const Text(
+                                        'Instant (QRIS, VA, E-Wallet, Card)',
+                                        style: TextStyle(
+                                            color: Colors.white70, fontSize: 13),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.info_outline,
+                                  color: AppColors.lightBlue,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
-                        );
-                      },
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: GlassBox(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 4, 12),
+                            radius: 16,
+                            child: Row(
+                              children: [
+                                Icon(_iconFor(m.type),
+                                    color: AppColors.lightBlue),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(m.type,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15)),
+                                      const SizedBox(height: 2),
+                                      Text(m.masked,
+                                          style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 13)),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuButton<String>(
+                                  color: const Color(0xFF0D1824),
+                                  icon: const Icon(Icons.more_vert,
+                                      color: Colors.white70),
+                                  onSelected: (v) {
+                                    if (v == 'edit') {
+                                      _editCustomMethod(context, m);
+                                    } else {
+                                      _confirmDelete(context, m);
+                                    }
+                                  },
+                                  itemBuilder: (_) => [
+                                    const PopupMenuItem(
+                                        value: 'edit',
+                                        child: Text('Edit detail')),
+                                    const PopupMenuItem(
+                                        value: 'delete',
+                                        child: Text('Delete',
+                                            style: TextStyle(
+                                                color: Colors.redAccent))),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Supported Channels at Checkout',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white70),
                     ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-              child: GradientButton(
-                  text: 'Add payment method', onTap: () => _add(context)),
-            ),
-          ]);
+                    const SizedBox(height: 10),
+                    _channelTile(
+                      icon: Icons.qr_code_2_rounded,
+                      title: 'QRIS',
+                      subtitle:
+                          'GoPay, OVO, DANA, ShopeePay, BCA & Mobile Banking',
+                    ),
+                    const SizedBox(height: 8),
+                    _channelTile(
+                      icon: Icons.account_balance_outlined,
+                      title: 'Virtual Account',
+                      subtitle: 'BCA, Mandiri, BNI, BRI, Permata',
+                    ),
+                    const SizedBox(height: 8),
+                    _channelTile(
+                      icon: Icons.account_balance_wallet_outlined,
+                      title: 'E-Wallets',
+                      subtitle: 'GoPay, ShopeePay direct link',
+                    ),
+                    const SizedBox(height: 8),
+                    _channelTile(
+                      icon: Icons.credit_card,
+                      title: 'Credit & Debit Cards',
+                      subtitle: 'Visa, MasterCard, JCB with 3D Secure',
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                child: GradientButton(
+                  text: 'Add payment method',
+                  onTap: () => _showPaymentInfo(context),
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
